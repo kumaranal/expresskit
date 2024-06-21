@@ -1,5 +1,9 @@
 import { gql } from "graphql-tag";
 const typeDefs = gql`
+type CheckResponse {
+  message: String
+  statusCode: Int
+}
   type User {
     id: ID!
     username: String!
@@ -14,6 +18,7 @@ const typeDefs = gql`
     createUser(username: String!, password: String!): User
     updateUser(id: ID!, username: String, password: String): User
     deleteUser(id: ID!): Boolean
+    signIn(username: String!, password: String!): CheckResponse
   }
 `;
 export default typeDefs;

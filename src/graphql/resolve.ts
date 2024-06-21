@@ -1,10 +1,9 @@
-import { Resolvers } from "./types";
 import Auth from "../models/auth";
 import { v4 as uuidv4 } from "uuid";
 import bcrypt from "bcrypt";
 import validateAttributes from "../helper/validation";
 
-const resolvers: Resolvers = {
+const resolvers = {
   Query: {
     users: async () => await Auth.findAll(),
     user: async (_, { id }) => await Auth.findByPk(id),
@@ -54,6 +53,24 @@ const resolvers: Resolvers = {
       }
       return false;
     },
+    signIn: async (_, { username, password }) => {
+      try {
+        if (!validateAttributes(username, "emailcheck")) {
+          throw new Error("Invalid username");
+        }
+
+        if (!validateAttributes(password, "passwordcheck")) {
+          throw new Error("Invalid password");
+        }
+        const user = await Auth.findOne({ where: { username } });
+        if (!user || !(await bcrypt.compare(password, user?.dataValues.password))) {
+          throw new Error("Invalid username or password");
+        }
+        return { message: "Signin successful", statusCode: 200 };
+      } catch (error) {
+        throw new Error("Internal Server Error");
+      }
+    }
   },
 };
 export default resolvers;
