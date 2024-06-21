@@ -22,7 +22,7 @@ app.use(express.json());
 
 //app routes
 app.get("/", (req, res) => {
-  res.send("Hello World!");
+  res.send("My World!");
 });
 
 app.use("/api", demoRoutes);

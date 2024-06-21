@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import Auth from "../models/auth";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import validateAttributes from "../helper/validation";
 import { failResponse, successResponse } from "../helper/responseSchema";
+import Auth from "../models/auth";
 
 export const signUp = async (req: Request, res: Response) => {
   try {

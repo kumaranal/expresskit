@@ -1,4 +1,4 @@
-import { DataTypes, Model } from "sequelize";
+import { DataTypes, Model ,Sequelize } from "sequelize";
 import sequelizeInstance from "./index";
 
 class Auth extends Model {
