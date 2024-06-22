@@ -1,4 +1,5 @@
-import { gql } from "graphql-tag";
+import { gql } from 'apollo-server-express';
+
 const typeDefs = gql`
 type CheckResponse {
   message: String
@@ -22,3 +23,4 @@ type CheckResponse {
   }
 `;
 export default typeDefs;
+
