@@ -1,10 +1,17 @@
-import { gql } from 'apollo-server-express';
+import { gql } from "apollo-server-express";
 
 const typeDefs = gql`
-type CheckResponse {
-  message: String
-  statusCode: Int
-}
+  scalar Upload
+
+  type File {
+    filename: String!
+    mimetype: String!
+    url: String!
+  }
+  type CheckResponse {
+    message: String
+    statusCode: Int
+  }
   type User {
     id: ID!
     username: String!
@@ -20,7 +27,7 @@ type CheckResponse {
     updateUser(id: ID!, username: String, password: String): User
     deleteUser(id: ID!): Boolean
     signIn(username: String!, password: String!): CheckResponse
+    uploadFile(file: Upload!): File!
   }
 `;
 export default typeDefs;
-

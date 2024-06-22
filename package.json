@@ -5,14 +5,16 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon src/index.ts",
-    "migration-creation": "npx sequelize-cli migration:generate --name ",
-    "migration-push": "npm run sequelize db:migrate"
+    "migration-creation": "npx sequelize-cli migration:generate --name table_name",
+    "migration-push": "npm run sequelize db:migrate",
+    "sequalize": "npx sequelize-cli init "
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@supabase/supabase-js": "^2.43.5",
     "@types/graphql": "^14.5.0",
     "@types/uuid": "^10.0.0",
     "apollo-server-express": "^3.13.0",
@@ -23,6 +25,8 @@
     "graphql": "^16.9.0",
     "graphql-http": "^1.22.1",
     "graphql-tools": "^9.0.1",
+    "graphql-upload": "^16.0.2",
+    "mysql2": "^3.10.1",
     "nodemon": "^3.1.3",
     "pg": "^8.12.0",
     "pg-hstore": "^2.3.4",

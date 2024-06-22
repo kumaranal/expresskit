@@ -2,8 +2,11 @@ import Auth from "../models/auth";
 import { v4 as uuidv4 } from "uuid";
 import bcrypt from "bcrypt";
 import validateAttributes from "../helper/validation";
+// const { GraphQLUpload } = require("graphql-upload");
+import supabase from "../../supabase";
 
 const resolvers = {
+  // Upload: GraphQLUpload,
   Query: {
     users: async () => await Auth.findAll(),
     user: async (_, { id }) => await Auth.findByPk(id),
@@ -63,14 +66,46 @@ const resolvers = {
           throw new Error("Invalid password");
         }
         const user = await Auth.findOne({ where: { username } });
-        if (!user || !(await bcrypt.compare(password, user?.dataValues.password))) {
+        if (
+          !user ||
+          !(await bcrypt.compare(password, user?.dataValues.password))
+        ) {
           throw new Error("Invalid username or password");
         }
         return { message: "Signin successful", statusCode: 200 };
       } catch (error) {
         throw new Error("Internal Server Error");
       }
-    }
+    },
+    uploadFile: async (_, { file }) => {
+      const { createReadStream, filename, mimetype } = await file;
+      const stream = createReadStream();
+      const uniqueFilename = `${uuidv4()}-${filename}`;
+      try {
+        // Upload the file to Supabase Storage
+        const { data, error } = await supabase.storage
+          .from("your-bucket-name")
+          .upload(uniqueFilename, stream, {
+            contentType: mimetype,
+          });
+
+        if (error) {
+          throw new Error(`Failed to upload file: ${error.message}`);
+        }
+
+        const { data: fileUrl } = supabase.storage
+          .from("your-bucket-name")
+          .getPublicUrl(uniqueFilename);
+
+        return {
+          filename,
+          mimetype,
+          url: fileUrl.publicUrl,
+        };
+      } catch (error) {
+        throw new Error("Internal Server Error");
+      }
+    },
   },
 };
 export default resolvers;

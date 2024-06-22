@@ -1,23 +1,23 @@
 import { DataTypes, Model, Sequelize } from "sequelize";
 import sequelizeInstance from "./index";
 
-class Auth extends Model {
+class User extends Model {
   public id!: number;
   public username!: string;
-  public password!: string;
-  public unique_id_key!: string;
+  public image!: string;
+  public email!: string;
 }
 
-Auth.init(
+User.init(
   {
     username: DataTypes.STRING,
-    password: DataTypes.STRING,
-    unique_id_key: DataTypes.STRING,
+    image: DataTypes.STRING,
+    email: DataTypes.STRING,
   },
   {
     sequelize: sequelizeInstance,
-    modelName: "auth",
+    modelName: "user",
   }
 );
 
-export default Auth;
+export default User;
