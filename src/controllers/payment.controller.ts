@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
-import { failResponse } from "../helper/responseSchema";
 import { Stripe } from "stripe";
 import logger from "../utils/logger";
+import asyncHandeler from "../utils/asyncHandeler";
+import { createCustomError } from "../utils/customError";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: "2024-04-10",
@@ -9,12 +10,11 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
 
 const webhookSecretKey = process.env.STRIPE_WEBHOOK_SECRET as string | "";
 
-export const PaymentWebhook = async (req: Request, res: Response) => {
+export const PaymentWebhook = asyncHandeler( async (req: Request, res: Response) => {
   const signature = req.headers["stripe-signature"];
   if (!signature) {
-    return failResponse(res, "invalid signature", 400);
+    throw createCustomError("invalid signature", 400);
   }
-  try {
     const event = stripe.webhooks.constructEvent(
       req.body,
       signature,
@@ -44,8 +44,4 @@ export const PaymentWebhook = async (req: Request, res: Response) => {
         logger.error("unhandled event type", { event: event.type });
         break;
     }
-  } catch (error) {
-    logger.error("error", { error: error });
-    return failResponse(res, error, 500);
-  }
-};
+});

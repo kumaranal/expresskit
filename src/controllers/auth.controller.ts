@@ -2,19 +2,20 @@ import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import validateAttributes from "../helper/validation";
-import { failResponse, successResponse } from "../helper/responseSchema";
 import Auth from "../models/auth";
+import asyncHandeler from "../utils/asyncHandeler";
+import { createCustomError } from "../utils/customError";
+import { createSuccessResponse } from "../utils/createSuccessResponse";
 
-export const signUp = async (req: Request, res: Response) => {
-  try {
+export const signUp = asyncHandeler(async (req: Request, res: Response) => {
     const { username, password } = req.body;
     const usernameCheck = validateAttributes(username, "emailcheck");
     if (!usernameCheck) {
-      return failResponse(res, "invalid emailId", 401);
+      throw createCustomError("invalid emailId", 401);
     }
     const passwordCheck = validateAttributes(password, "passwordcheck");
     if (!passwordCheck) {
-      return failResponse(res, "invalid password", 401);
+      throw createCustomError("invalid password", 401);
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     const uniqueIdKey = uuidv4();
@@ -24,48 +25,37 @@ export const signUp = async (req: Request, res: Response) => {
       password: hashedPassword,
       unique_id_key: uniqueIdKey,
     });
-    return successResponse(res, user, 201);
-  } catch (error) {
-    return failResponse(res, error, 500);
-  }
-};
+    return createSuccessResponse(res, user);
 
-export const signIn = async (req: Request, res: Response) => {
-  const { username, password } = req.body;
-  try {
+});
+
+export const signIn = asyncHandeler(async (req: Request, res: Response) => {
+    const { username, password } = req.body;
     const user = await Auth.findOne({ where: { username } });
     if (!user || !(await bcrypt.compare(password, user?.dataValues.password))) {
-      return failResponse(res, "Invalid username or password", 401);
-    }
-    return successResponse(res, "Signin successful", 200);
-  } catch (error) {
-    return failResponse(res, "Internal Server Error", 500);
-  }
-};
+      throw createCustomError("Invalid username or password", 401);
 
-export const forgotPassword = async (req: Request, res: Response) => {
-  const { username } = req.body;
-  try {
+    }
+    return createSuccessResponse(res, "Signin successful");
+});
+
+export const forgotPassword =asyncHandeler( async (req: Request, res: Response) => {
+    const { username } = req.body;
     const user = await Auth.findOne({ where: { username } });
     if (!user) {
-      return failResponse(res, "Invalid username", 401);
+      throw createCustomError("Invalid username", 401);
     }
-    return successResponse(
+    return createSuccessResponse(
       res,
-      `https://localhost:3000/reset/?uuid=${user.dataValues.unique_id_key}`,
-      200
+      `https://localhost:3000/reset/?uuid=${user.dataValues.unique_id_key}`
     );
-  } catch (error) {
-    return failResponse(res, "Internal Server Error", 500);
-  }
-};
+});
 
-export const resetPassword = async (req: Request, res: Response) => {
-  try {
+export const resetPassword = asyncHandeler(async (req: Request, res: Response) => {
     const { uuid, password } = req.body;
     const passwordCheck = validateAttributes(password, "passwordcheck");
     if (!passwordCheck) {
-      return failResponse(res, "invalid password", 401);
+      throw createCustomError("Invalid password", 401);
     }
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -75,11 +65,9 @@ export const resetPassword = async (req: Request, res: Response) => {
     );
 
     if (!user) {
-      return failResponse(res, "Invalid uuid", 401);
+      throw createCustomError("Invalid uuid", 401);
     }
 
-    return successResponse(res, user, 201);
-  } catch (error) {
-    return failResponse(res, error, 500);
-  }
-};
+    return createSuccessResponse(res, user);
+
+});

@@ -2,7 +2,6 @@ import express from "express";
 import authRoutes from "./routes/auth.route";
 import sequelize from "./models/index";
 import paymentRoutes from "./routes/payment.route";
-import expressWinston from "express-winston";
 import logger from "./utils/logger";
 import demoRoutes from "./routes/demo.route";
 import typeDefs from "./graphql/schema";
@@ -47,12 +46,7 @@ async function startServer() {
 
   //error handling
   app.use(errorHandlerfn)
-
-  // app.use(
-  //   expressWinston.errorLogger({
-  //     winstonInstance: logger,
-  //   })
-  // );
+  
   sequelize
     .sync()
     .then(() => {
