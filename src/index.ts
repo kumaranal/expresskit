@@ -10,6 +10,7 @@ import dotenv from "dotenv";
 dotenv.config();
 import resolvers from "./graphql/resolve";
 import { ApolloServer } from "apollo-server-express";
+import errorHandlerfn from "./middleware/errorHandler";
 // const { graphqlUploadExpress } = require("graphql-upload");
 
 // Create an instance of ApolloServer
@@ -19,6 +20,7 @@ const app = express();
 const port = 3000;
 
 async function startServer() {
+
   //payment webhook
   app.use("/api", paymentRoutes);
 
@@ -37,12 +39,20 @@ async function startServer() {
   app.use("/api", demoRoutes);
   app.use("/api", authRoutes);
 
+  // Catch 404 and forward to error handler
+  app.use((req, res, next) => {
+    const error = new Error("API not found");
+    next(error);
+  });
+
   //error handling
-  app.use(
-    expressWinston.errorLogger({
-      winstonInstance: logger,
-    })
-  );
+  app.use(errorHandlerfn)
+
+  // app.use(
+  //   expressWinston.errorLogger({
+  //     winstonInstance: logger,
+  //   })
+  // );
   sequelize
     .sync()
     .then(() => {
