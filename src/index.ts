@@ -14,24 +14,27 @@ import { getUserFromToken } from "./middleware/jwtCheck";
 // const { graphqlUploadExpress } = require("graphql-upload");
 
 // Create an instance of ApolloServer
-const server = new ApolloServer({ typeDefs, resolvers , context: ({ req }) => {
-  const token = req.headers.authorization?.split(" ")[1] || "";
-  let user = null;
-  if (token) {
-    try {
-      user = getUserFromToken(token);
-    } catch (error) {
-      console.error("Invalid or expired token", error);
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  context: ({ req }) => {
+    const token = req.headers.authorization?.split(" ")[1] || "";
+    let user = null;
+    if (token) {
+      try {
+        user = getUserFromToken(token);
+      } catch (error) {
+        logger.error("error occures", { error: error });
+      }
     }
-  }
-  return { user };
-},});
+    return { user };
+  },
+});
 
 const app = express();
 const port = 3000;
 
 async function startServer() {
-
   //payment webhook
   app.use("/api", paymentRoutes);
 
@@ -57,7 +60,7 @@ async function startServer() {
   });
 
   //error handling
-  app.use(errorHandlerfn)
+  app.use(errorHandlerfn);
 
   sequelize
     .sync()

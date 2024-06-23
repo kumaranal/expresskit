@@ -8,7 +8,12 @@ import supabase from "../../supabase";
 const resolvers = {
   // Upload: GraphQLUpload,
   Query: {
-    users: async () => await Auth.findAll(),
+    users: async (parent, args, context) => {
+      if (!context.user) {
+        throw new Error("Unauthorized");
+      }
+      await Auth.findAll();
+    },
     user: async (_, { id }) => await Auth.findByPk(id),
   },
   Mutation: {

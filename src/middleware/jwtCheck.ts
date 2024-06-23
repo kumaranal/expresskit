@@ -6,6 +6,6 @@ export function getUserFromToken(token: string) {
     const user = verifyToken(token);
     return user;
   } catch (error) {
-    throw new Error("Invalid or expired token");
+    return null;
   }
 }
