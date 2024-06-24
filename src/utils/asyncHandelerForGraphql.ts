@@ -5,7 +5,7 @@ const asyncHandler = (resolver) => {
       try {
         return await resolver(parent, args, context, info);
       } catch (error) {
-        return "moka"
+        // return "moka"
         // throw new Error(error.message)
         throw createCustomError(error.message, error.staus || 500);
       }
