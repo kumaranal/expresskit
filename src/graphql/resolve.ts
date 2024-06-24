@@ -4,38 +4,39 @@ import bcrypt from "bcrypt";
 import validateAttributes from "../helper/validation";
 import supabase from "../../supabase";
 import { generateToken } from "../utils/jwt";
+import asyncHandler from "../utils/asyncHandelerForGraphql";
+import { createCustomError } from "../utils/customError";
 // import { GraphQLUpload, FileUpload } from 'graphql-upload/GraphQLUpload.mjs';
 
 const resolvers = {
   // Upload: GraphQLUpload,
   Query: {
-    users: async (parent, args, context) => {
+    users: asyncHandler(async (parent, args, context) => {
       if (!context.user) {
-        throw new Error("Unauthorized");
+        throw createCustomError("Unauthorized")
       }
       const users = await Auth.findAll();
       return users;
-    },
-    user: async (_, { id },context) =>{       
+    }),
+    user: asyncHandler(async (_, { id },context) =>{       
       if (!context.user) {
-      throw new Error("Unauthorized");
+        throw createCustomError("Unauthorized")
       }
       const users = await Auth.findByPk(id)
       return users;
-    },
+    }),
 
   },
   Mutation: {
-    signUp: async (_, { username, password }) => {
+    signUp: asyncHandler(async (_, { username, password }) => {
       const uniqueIdKey = uuidv4();
       if (!validateAttributes(username, "emailcheck")) {
-        throw new Error("Invalid username");
-      }
+        throw createCustomError("Invalid username")
 
+      }
       if (!validateAttributes(password, "passwordcheck")) {
-        throw new Error("Invalid password");
+        throw createCustomError("Invalid password")
       }
-
       const hashedPassword = await bcrypt.hash(password, 10);
       await Auth.create({
         username,
@@ -44,17 +45,17 @@ const resolvers = {
       });
       const token = await generateToken({ username, uniqueIdKey });
       return { message: "successfully signed up", token: token };
-    },
-    updateUser: async (_, { id, username, password },context) => {
+    }),
+    updateUser: asyncHandler( async (_, { id, username, password },context) => {
       if (!context.user) {
-        throw new Error("Unauthorized");
+        throw createCustomError("Unauthorized")
       }
       if (!validateAttributes(username, "emailcheck")) {
-        throw new Error("Invalid username");
+        throw createCustomError("Invalid username")
       }
 
       if (!validateAttributes(password, "passwordcheck")) {
-        throw new Error("Invalid password");
+        throw createCustomError("Invalid password")
       }
       const user = await Auth.findByPk(id);
       if (user) {
@@ -65,11 +66,11 @@ const resolvers = {
         await user.save();
         return user;
       }
-      throw new Error("User not found");
-    },
-    deleteUser: async (_, { id },context) => {
+      throw createCustomError("User not found")
+    }),
+    deleteUser: asyncHandler (async (_, { id },context) => {
       if (!context.user) {
-        throw new Error("Unauthorized");
+        throw createCustomError("Unauthorized")
       }
       const user = await Auth.findByPk(id);
       if (user) {
@@ -77,40 +78,35 @@ const resolvers = {
         return true;
       }
       return false;
-    },
-    signIn: async (_, { username, password }) => {
-      try {
+    }),
+    signIn: asyncHandler(async (_, { username, password }) => {
         if (!validateAttributes(username, "emailcheck")) {
-          throw new Error("Invalid username");
+          throw createCustomError("Invalid username")
         }
 
         if (!validateAttributes(password, "passwordcheck")) {
-          throw new Error("Invalid password");
+          throw createCustomError("Invalid password")
         }
         const user = await Auth.findOne({ where: { username } });
         if (!user) {
-          throw new Error("Invalid username or password");
+          throw createCustomError("Invalid username or password")
         }
         if (
           !user ||
           !(await bcrypt.compare(password, user?.dataValues.password))
         ) {
-          throw new Error("Invalid username or password");
+          throw createCustomError("Invalid username or password")
         }
         const token = await generateToken({
           username,
           unique_id_key: user?.dataValues.unique_id_key,
         });
         return { message: "successfully signed up", token: token };
-      } catch (error) {
-        throw new Error("Internal Server Error");
-      }
-    },
-    uploadFile: async (_, { file }) => {
+    }),
+    uploadFile: asyncHandler(async (_, { file }) => {
       const { createReadStream, filename, mimetype } = await file;
       const stream = createReadStream();
       const uniqueFilename = `${uuidv4()}-${filename}`;
-      try {
         // Upload the file to Supabase Storage
         const { data, error } = await supabase.storage
           .from("your-bucket-name")
@@ -129,10 +125,7 @@ const resolvers = {
         return {
           url: fileUrl.publicUrl,
         };
-      } catch (error) {
-        throw new Error("Internal Server Error");
-      }
-    },
+    }),
   },
 };
 export default resolvers;
