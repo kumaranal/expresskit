@@ -16,7 +16,14 @@ const resolvers = {
       const users = await Auth.findAll();
       return users;
     },
-    user: async (_, { id }) => await Auth.findByPk(id),
+    user: async (_, { id },context) =>{       
+      if (!context.user) {
+      throw new Error("Unauthorized");
+      }
+      const users = await Auth.findByPk(id)
+      return users;
+    },
+
   },
   Mutation: {
     signUp: async (_, { username, password }) => {
@@ -38,7 +45,10 @@ const resolvers = {
       const token = await generateToken({ username, uniqueIdKey });
       return { message: "successfully signed up", token: token };
     },
-    updateUser: async (_, { id, username, password }) => {
+    updateUser: async (_, { id, username, password },context) => {
+      if (!context.user) {
+        throw new Error("Unauthorized");
+      }
       if (!validateAttributes(username, "emailcheck")) {
         throw new Error("Invalid username");
       }
@@ -57,7 +67,10 @@ const resolvers = {
       }
       throw new Error("User not found");
     },
-    deleteUser: async (_, { id }) => {
+    deleteUser: async (_, { id },context) => {
+      if (!context.user) {
+        throw new Error("Unauthorized");
+      }
       const user = await Auth.findByPk(id);
       if (user) {
         await user.destroy();
