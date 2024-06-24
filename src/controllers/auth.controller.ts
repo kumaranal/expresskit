@@ -8,38 +8,37 @@ import { createCustomError } from "../utils/customError";
 import { createSuccessResponse } from "../utils/createSuccessResponse";
 
 export const signUp = asyncHandeler(async (req: Request, res: Response) => {
-    const { username, password } = req.body;
-    const usernameCheck = validateAttributes(username, "emailcheck");
-    if (!usernameCheck) {
-      throw createCustomError("invalid emailId", 401);
-    }
-    const passwordCheck = validateAttributes(password, "passwordcheck");
-    if (!passwordCheck) {
-      throw createCustomError("invalid password", 401);
-    }
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const uniqueIdKey = uuidv4();
+  const { username, password } = req.body;
+  const usernameCheck = validateAttributes(username, "emailcheck");
+  if (!usernameCheck) {
+    throw createCustomError("invalid emailId", 401);
+  }
+  const passwordCheck = validateAttributes(password, "passwordcheck");
+  if (!passwordCheck) {
+    throw createCustomError("invalid password", 401);
+  }
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const uniqueIdKey = uuidv4();
 
-    const user = await Auth.create({
-      username: username,
-      password: hashedPassword,
-      unique_id_key: uniqueIdKey,
-    });
-    return createSuccessResponse(res, user);
-
+  const user = await Auth.create({
+    username: username,
+    password: hashedPassword,
+    unique_id_key: uniqueIdKey,
+  });
+  return createSuccessResponse(res, user);
 });
 
 export const signIn = asyncHandeler(async (req: Request, res: Response) => {
-    const { username, password } = req.body;
-    const user = await Auth.findOne({ where: { username } });
-    if (!user || !(await bcrypt.compare(password, user?.dataValues.password))) {
-      throw createCustomError("Invalid username or password", 401);
-
-    }
-    return createSuccessResponse(res, "Signin successful");
+  const { username, password } = req.body;
+  const user = await Auth.findOne({ where: { username } });
+  if (!user || !(await bcrypt.compare(password, user?.dataValues.password))) {
+    throw createCustomError("Invalid username or password", 401);
+  }
+  return createSuccessResponse(res, "Signin successful");
 });
 
-export const forgotPassword =asyncHandeler( async (req: Request, res: Response) => {
+export const forgotPassword = asyncHandeler(
+  async (req: Request, res: Response) => {
     const { username } = req.body;
     const user = await Auth.findOne({ where: { username } });
     if (!user) {
@@ -49,9 +48,11 @@ export const forgotPassword =asyncHandeler( async (req: Request, res: Response) 
       res,
       `https://localhost:3000/reset/?uuid=${user.dataValues.unique_id_key}`
     );
-});
+  }
+);
 
-export const resetPassword = asyncHandeler(async (req: Request, res: Response) => {
+export const resetPassword = asyncHandeler(
+  async (req: Request, res: Response) => {
     const { uuid, password } = req.body;
     const passwordCheck = validateAttributes(password, "passwordcheck");
     if (!passwordCheck) {
@@ -69,5 +70,5 @@ export const resetPassword = asyncHandeler(async (req: Request, res: Response) =
     }
 
     return createSuccessResponse(res, user);
-
-});
+  }
+);

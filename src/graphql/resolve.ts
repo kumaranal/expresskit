@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import validateAttributes from "../helper/validation";
 // const { GraphQLUpload } = require("graphql-upload");
 import supabase from "../../supabase";
+import { generateToken } from "../utils/jwt";
 
 const resolvers = {
   // Upload: GraphQLUpload,
@@ -12,12 +13,13 @@ const resolvers = {
       if (!context.user) {
         throw new Error("Unauthorized");
       }
-      await Auth.findAll();
+      const users = await Auth.findAll();
+      return users;
     },
     user: async (_, { id }) => await Auth.findByPk(id),
   },
   Mutation: {
-    createUser: async (_, { username, password }) => {
+    signUp: async (_, { username, password }) => {
       const uniqueIdKey = uuidv4();
       if (!validateAttributes(username, "emailcheck")) {
         throw new Error("Invalid username");
@@ -28,11 +30,13 @@ const resolvers = {
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
-      return await Auth.create({
+      await Auth.create({
         username,
         password: hashedPassword,
         unique_id_key: uniqueIdKey,
       });
+      const token = await generateToken({ username, uniqueIdKey });
+      return { message: "successfully signed up", token: token };
     },
     updateUser: async (_, { id, username, password }) => {
       if (!validateAttributes(username, "emailcheck")) {
@@ -71,13 +75,20 @@ const resolvers = {
           throw new Error("Invalid password");
         }
         const user = await Auth.findOne({ where: { username } });
+        if (!user) {
+          throw new Error("Invalid username or password");
+        }
         if (
           !user ||
           !(await bcrypt.compare(password, user?.dataValues.password))
         ) {
           throw new Error("Invalid username or password");
         }
-        return { message: "Signin successful", statusCode: 200 };
+        const token = await generateToken({
+          username,
+          unique_id_key: user?.dataValues.unique_id_key,
+        });
+        return { message: "successfully signed up", token: token };
       } catch (error) {
         throw new Error("Internal Server Error");
       }

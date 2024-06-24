@@ -18,15 +18,19 @@ const typeDefs = gql`
     password: String!
     unique_id_key: String!
   }
+  type AuthenticationData {
+    message: String!
+    token: String!
+  }
   type Query {
     users: [User]
     user(id: ID!): User
   }
   type Mutation {
-    createUser(username: String!, password: String!): User
+    signUp(username: String!, password: String!): AuthenticationData
     updateUser(id: ID!, username: String, password: String): User
     deleteUser(id: ID!): Boolean
-    signIn(username: String!, password: String!): CheckResponse
+    signIn(username: String!, password: String!): AuthenticationData
     uploadFile(file: Upload!): File!
   }
 `;
