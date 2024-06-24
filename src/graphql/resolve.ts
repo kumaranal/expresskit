@@ -2,9 +2,9 @@ import Auth from "../models/auth";
 import { v4 as uuidv4 } from "uuid";
 import bcrypt from "bcrypt";
 import validateAttributes from "../helper/validation";
-// const { GraphQLUpload } = require("graphql-upload");
 import supabase from "../../supabase";
 import { generateToken } from "../utils/jwt";
+// import { GraphQLUpload, FileUpload } from 'graphql-upload/GraphQLUpload.mjs';
 
 const resolvers = {
   // Upload: GraphQLUpload,
@@ -114,8 +114,6 @@ const resolvers = {
           .getPublicUrl(uniqueFilename);
 
         return {
-          filename,
-          mimetype,
           url: fileUrl.publicUrl,
         };
       } catch (error) {

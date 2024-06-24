@@ -3,9 +3,7 @@ import { gql } from "apollo-server-express";
 const typeDefs = gql`
   scalar Upload
 
-  type File {
-    filename: String!
-    mimetype: String!
+  type UploadFile {
     url: String!
   }
   type CheckResponse {
@@ -31,7 +29,7 @@ const typeDefs = gql`
     updateUser(id: ID!, username: String, password: String): User
     deleteUser(id: ID!): Boolean
     signIn(username: String!, password: String!): AuthenticationData
-    uploadFile(file: Upload!): File!
+    uploadFile(file: Upload!): UploadFile
   }
 `;
 export default typeDefs;
