@@ -13,3 +13,11 @@ export async function checkUser(username: string) {
   }
   return true;
 }
+
+export async function checkUserData(username: string) {
+  const user = await Auth.findOne({ where: { username } });
+  if (!user) {
+    return null;
+  }
+  return user;
+}

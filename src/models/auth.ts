@@ -6,6 +6,7 @@ class Auth extends Model {
   public username!: string;
   public password!: string;
   public unique_id_key!: string;
+  public refreshToken!: string;
 }
 
 Auth.init(
@@ -13,6 +14,7 @@ Auth.init(
     username: DataTypes.STRING,
     password: DataTypes.STRING,
     unique_id_key: DataTypes.STRING,
+    refreshToken: DataTypes.STRING 
   },
   {
     sequelize: sequelizeInstance,

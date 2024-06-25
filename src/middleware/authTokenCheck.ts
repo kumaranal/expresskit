@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const secretKey = 'your_secret_key';
 
 const authenticateToken = (req, res, next) => {
-    const token = req.cookies.token;
+    const token = req.cookies.accessToken;
 
     if (!token) {
         return res.status(401).json({ message: 'Unauthorized: No token provided' });

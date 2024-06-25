@@ -6,9 +6,35 @@ import Auth from "../models/auth";
 import asyncHandeler from "../utils/asyncHandeler";
 import { createCustomError } from "../utils/customError";
 import { createSuccessResponse } from "../utils/createSuccessResponse";
-import { generateAccessToken } from "../utils/jwt";
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../utils/jwt";
 import { ApiResponse } from "../utils/ApiResponse";
 import { ApiError } from "../utils/ApiError";
+import { checkUser } from "../helper/checkUserExist";
+import logger from "../utils/logger";
+
+
+const options = {
+  httpOnly: true,
+  secure: true
+}
+
+
+const generateAccessAndRefereshTokens = async (username: string, unique_id_key: number) => {
+  try {
+    const accessToken = await generateAccessToken({ username });
+    const refreshToken = await generateRefreshToken({ username });
+    await Auth.update(
+      { refreshToken: refreshToken },
+      { where: { unique_id_key: unique_id_key } }
+    );
+    return { accessToken, refreshToken }
+
+  } catch (error) {
+    logger.error(error)
+    throw createCustomError("Something went wrong while generating referesh and access token", 500);
+  }
+}
+
 
 export const signUp = asyncHandeler(async (req: Request, res: Response) => {
   const { username, password } = req.body;
@@ -22,17 +48,25 @@ export const signUp = asyncHandeler(async (req: Request, res: Response) => {
   }
   const hashedPassword = await bcrypt.hash(password, 10);
   const uniqueIdKey = uuidv4();
-  const token = await generateAccessToken({ username });
-  // Set the token as a cookie
-  res.cookie('token', token, { httpOnly: true, secure: true, maxAge: 3600 * 1000 });
   const user = await Auth.create({
     username: username,
     password: hashedPassword,
     unique_id_key: uniqueIdKey,
   });
-  return res.status(201).json(
-    new ApiResponse(201, "SignUp successful", token)
-  )
+  const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(username, user?.dataValues.unique_id_key)
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new ApiResponse(
+        200,
+        "Sign-up Successfully",
+        { accessToken, refreshToken: refreshToken }
+
+      )
+    )
 });
 
 export const signIn = asyncHandeler(async (req: Request, res: Response) => {
@@ -41,12 +75,21 @@ export const signIn = asyncHandeler(async (req: Request, res: Response) => {
   if (!user || !(await bcrypt.compare(password, user?.dataValues.password))) {
     throw createCustomError("Invalid username or password", 401);
   }
-  const token = await generateAccessToken({ username });
-  // Set the token as a cookie
-  res.cookie('token', token, { httpOnly: true, secure: true, maxAge: 3600 * 1000 });
-  return res.status(200).json(
-    new ApiResponse(200, "Signin successful")
-  )
+
+  const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(username, user?.dataValues.unique_id_key)
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new ApiResponse(
+        200,
+        "Sign in Successfully",
+        { accessToken, refreshToken: refreshToken }
+
+      )
+    )
 });
 
 export const forgotPassword = asyncHandeler(
@@ -100,3 +143,33 @@ export const signout = asyncHandeler(async (req: Request, res: Response) => {
     new ApiResponse(200, 'Logged out successfully')
   )
 });
+
+
+declare global {
+  namespace Express {
+    interface Request {
+      checkResult?: any; // Replace `any` with a specific type if you have a User type defined
+    }
+  }
+}
+
+export const refreshAccessToken = asyncHandeler(async (req: Request, res: Response) => {
+  const user =req.checkResult
+  const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user.username, user.unique_id_key)
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new ApiResponse(
+        200,
+        "Access token refreshed",
+        { accessToken, refreshToken: refreshToken }
+
+      )
+    )
+}
+)
+
+
