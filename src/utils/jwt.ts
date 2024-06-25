@@ -3,7 +3,10 @@ import dotenv from "dotenv";
 dotenv.config();
 const secretKey = process.env.JWT_SECRET_KEY || "your-secret-key";
 
-export async function generateToken(payload: object, expiresIn: string = "1h") {
+export async function generateAccessToken(payload: object, expiresIn: string = "1h") {
+  return jwt.sign(payload, secretKey, { expiresIn });
+}
+export async function generateRefreshToken(payload: object, expiresIn: string = "5h") {
   return jwt.sign(payload, secretKey, { expiresIn });
 }
 

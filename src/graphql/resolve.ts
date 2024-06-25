@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import bcrypt from "bcrypt";
 import validateAttributes from "../helper/validation";
 import supabase from "../../supabase";
-import { generateToken } from "../utils/jwt";
+import { generateAccessToken } from "../utils/jwt";
 import asyncHandler from "../utils/asyncHandelerForGraphql";
 import { createCustomError } from "../utils/customError";
 // import { GraphQLUpload, FileUpload } from 'graphql-upload/GraphQLUpload.mjs';
@@ -12,9 +12,9 @@ const resolvers = {
   // Upload: GraphQLUpload,
   Query: {
     users: asyncHandler(async (parent, args, context) => {
-      if (!context.user) {
-        throw createCustomError("Unauthorized")
-      }
+      // if (!context.user) {
+      //   throw createCustomError("Unauthorized")
+      // }
       const users = await Auth.findAll();
       return users;
     }),
@@ -32,7 +32,6 @@ const resolvers = {
       const uniqueIdKey = uuidv4();
       if (!validateAttributes(username, "emailcheck")) {
         throw createCustomError("Invalid username")
-
       }
       if (!validateAttributes(password, "passwordcheck")) {
         throw createCustomError("Invalid password")
@@ -43,7 +42,7 @@ const resolvers = {
         password: hashedPassword,
         unique_id_key: uniqueIdKey,
       });
-      const token = await generateToken({ username, uniqueIdKey });
+      const token = await generateAccessToken({ username, uniqueIdKey });
       return { message: "successfully signed up", token: token };
     }),
     updateUser: asyncHandler( async (_, { id, username, password },context) => {
@@ -97,7 +96,7 @@ const resolvers = {
         ) {
           throw createCustomError("Invalid username or password")
         }
-        const token = await generateToken({
+        const token = await generateAccessToken({
           username,
           unique_id_key: user?.dataValues.unique_id_key,
         });

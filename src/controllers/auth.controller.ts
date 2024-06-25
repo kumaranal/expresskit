@@ -6,6 +6,9 @@ import Auth from "../models/auth";
 import asyncHandeler from "../utils/asyncHandeler";
 import { createCustomError } from "../utils/customError";
 import { createSuccessResponse } from "../utils/createSuccessResponse";
+import { generateAccessToken } from "../utils/jwt";
+import { ApiResponse } from "../utils/ApiResponse";
+import { ApiError } from "../utils/ApiError";
 
 export const signUp = asyncHandeler(async (req: Request, res: Response) => {
   const { username, password } = req.body;
@@ -19,13 +22,17 @@ export const signUp = asyncHandeler(async (req: Request, res: Response) => {
   }
   const hashedPassword = await bcrypt.hash(password, 10);
   const uniqueIdKey = uuidv4();
-
+  const token = await generateAccessToken({ username });
+  // Set the token as a cookie
+  res.cookie('token', token, { httpOnly: true, secure: true, maxAge: 3600 * 1000 });
   const user = await Auth.create({
     username: username,
     password: hashedPassword,
     unique_id_key: uniqueIdKey,
   });
-  return createSuccessResponse(res, user);
+  return res.status(201).json(
+    new ApiResponse(201, "SignUp successful", token)
+  )
 });
 
 export const signIn = asyncHandeler(async (req: Request, res: Response) => {
@@ -34,7 +41,12 @@ export const signIn = asyncHandeler(async (req: Request, res: Response) => {
   if (!user || !(await bcrypt.compare(password, user?.dataValues.password))) {
     throw createCustomError("Invalid username or password", 401);
   }
-  return createSuccessResponse(res, "Signin successful");
+  const token = await generateAccessToken({ username });
+  // Set the token as a cookie
+  res.cookie('token', token, { httpOnly: true, secure: true, maxAge: 3600 * 1000 });
+  return res.status(200).json(
+    new ApiResponse(200, "Signin successful")
+  )
 });
 
 export const forgotPassword = asyncHandeler(
@@ -44,10 +56,9 @@ export const forgotPassword = asyncHandeler(
     if (!user) {
       throw createCustomError("Invalid username", 401);
     }
-    return createSuccessResponse(
-      res,
-      `https://localhost:3000/reset/?uuid=${user.dataValues.unique_id_key}`
-    );
+    return res.status(200).json(
+      new ApiResponse(200, "https://localhost:3000/reset/?uuid=${user.dataValues.unique_id_key}")
+    )
   }
 );
 
@@ -69,6 +80,23 @@ export const resetPassword = asyncHandeler(
       throw createCustomError("Invalid uuid", 401);
     }
 
-    return createSuccessResponse(res, user);
+    return res.status(200).json(
+      new ApiResponse(200, "Reset Data Successfully", user)
+    )
   }
 );
+
+export const getAllUserData = asyncHandeler(async (req: Request, res: Response) => {
+  const users = await Auth.findAll();
+  return res.status(200).json(
+    new ApiResponse(200, "User data retrieved Successfully", users)
+  )
+
+});
+
+export const signout = asyncHandeler(async (req: Request, res: Response) => {
+  res.clearCookie('token', { httpOnly: true, secure: true });
+  return res.status(200).json(
+    new ApiResponse(200, 'Logged out successfully')
+  )
+});
