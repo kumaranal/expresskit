@@ -2,7 +2,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("auths", {
+    await queryInterface.createTable("auth", {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -20,8 +20,12 @@ module.exports = {
       unique_id_key: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
-        allowNull: false,
+        allowNull: true,
         unique: true,
+      },
+      refreshToken: {
+        type: Sequelize.STRING,
+        allowNull: true,
       },
       createdAt: {
         allowNull: false,
@@ -34,6 +38,6 @@ module.exports = {
     });
   },
   async down(queryInterface) {
-    await queryInterface.dropTable("auths");
+    await queryInterface.dropTable("auth");
   },
 };
