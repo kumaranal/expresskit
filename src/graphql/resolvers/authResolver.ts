@@ -5,12 +5,29 @@ import validateAttributes from "../../helper/validation";
 import supabase from "../../../supabase";
 import asyncHandler from "../../utils/asyncHandelerForGraphql";
 import { createCustomError } from "../../utils/customError";
-import { generateAccessAndRefereshTokens } from "../../controllers/auth.controller";
-import { verifyRefreshToken } from "../../utils/jwt";
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../../utils/jwt";
 import { checkUserData } from "../../helper/checkUserExist";
+import { UUID } from "crypto";
+import logger from "../../utils/logger";
 const options = {
   httpOnly: true,
   secure: true
+}
+
+export const generateAccessAndRefereshTokens = async (username: string, unique_id_key: UUID | string) => {
+  try {
+    const accessToken = await generateAccessToken({ username });
+    const refreshToken = await generateRefreshToken({ username });
+    await Auth.update(
+      { refreshToken: refreshToken },
+      { where: { unique_id_key: unique_id_key } }
+    );
+    return { accessToken, refreshToken }
+
+  } catch (error) {
+    logger.error(error)
+    throw createCustomError("Something went wrong while generating referesh and access token", 500);
+  }
 }
 
 const authResolver = {
