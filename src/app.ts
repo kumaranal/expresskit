@@ -8,12 +8,13 @@ import typeDefs from "./graphql/schema";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 dotenv.config();
-import resolvers from "./graphql/resolve";
+import resolvers from "./graphql/resolvers/index";
 import { ApolloServer } from "apollo-server-express";
 import errorHandlerfn from "./middleware/errorHandler";
 import { getUserFromToken } from "./middleware/jwtCheck";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import { createCustomError } from "./utils/customError";
 // import graphqlUploadExpress from 'graphql-upload/GraphQLUpload.mjs';
 // import { AppoloServerPluginDrainHttpServer} from 'apollo-server-core';
 
@@ -21,18 +22,18 @@ import rateLimit from "express-rate-limit";
 const server = new ApolloServer({
   typeDefs,
   resolvers,
-  context: ({ req }) => {
-    const tokenData = req.headers['authtoken'] as string | undefined;
-    const token = tokenData?.split(" ")[1] || "";
+  context: ({ req, res }) => {
+    const token = req.cookies.accessToken;
     let user = null;
-    if (token) {
-      try {
-        user = getUserFromToken(token);
-      } catch (error) {
-        logger.error("error occures", { error: error });
+    try {
+      if (!token) {
+        throw createCustomError("Invalid Token")
       }
+      user = getUserFromToken(token);
+    } catch (error) {
+      logger.error("error occures", { error: error });
     }
-    return { user };
+    return { user,req, res };
   },
 });
 
@@ -66,6 +67,7 @@ app.use("/api", authRoutes);
 
 
 async function startServer() {
+
   //error handling
   app.use(errorHandlerfn);
 
@@ -84,7 +86,7 @@ async function startServer() {
         logger.info(`Server is running on http://localhost:${port} & for graphql use http://localhost:${port}/graphql`);
       });
     })
-    .catch((err: unknown) => {
+    .catch((err: Error) => {
       logger.error("Unable to connect to the database:", err);
     });
 }

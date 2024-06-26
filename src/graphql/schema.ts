@@ -30,6 +30,7 @@ const typeDefs = gql`
     deleteUser(id: ID!): Boolean
     signIn(username: String!, password: String!): AuthenticationData
     uploadFile(file: Upload!): UploadFile
+    refreshAccessTokenChanger: AuthenticationData
   }
 `;
 export default typeDefs;

@@ -5,10 +5,12 @@ import validateAttributes from "../helper/validation";
 import Auth from "../models/auth";
 import asyncHandeler from "../utils/asyncHandeler";
 import { createCustomError } from "../utils/customError";
-import { generateAccessToken, generateRefreshToken } from "../utils/jwt";
+import { createSuccessResponse } from "../utils/createSuccessResponse";
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../utils/jwt";
 import { ApiResponse } from "../utils/ApiResponse";
+import { ApiError } from "../utils/ApiError";
+import { checkUser } from "../helper/checkUserExist";
 import logger from "../utils/logger";
-import { UUID } from "crypto";
 
 
 const options = {
@@ -17,7 +19,7 @@ const options = {
 }
 
 
-export const generateAccessAndRefereshTokens = async (username: string, unique_id_key: UUID | string) => {
+const generateAccessAndRefereshTokens = async (username: string, unique_id_key: number) => {
   try {
     const accessToken = await generateAccessToken({ username });
     const refreshToken = await generateRefreshToken({ username });
@@ -152,7 +154,7 @@ declare global {
 }
 
 export const refreshAccessToken = asyncHandeler(async (req: Request, res: Response) => {
-  const user = req.checkResult
+  const user =req.checkResult
   const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user.username, user.unique_id_key)
 
   return res
