@@ -4,9 +4,8 @@ import { createCustomError } from "../utils/customError";
 import asyncHandeler from "../utils/asyncHandeler";
 import { createSuccessResponse } from "../utils/createSuccessResponse";
 
-export const demo = asyncHandeler (async (req: Request, res: Response) => {
+export const demo = asyncHandeler(async (req: Request, res: Response) => {
     const data = "abcasde";
-    // throw createCustomError(data, 400);
     return createSuccessResponse(res, "VJVJHV");
 
 });
