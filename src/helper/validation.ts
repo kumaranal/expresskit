@@ -19,6 +19,10 @@ const passwordSchema = z
   });
 
 const emailSchema = z.string().email("Invalid email address");
+const nameSchema = z
+  .string()
+  .min(3, "Name must be at least 3 characters long")
+  .max(25, "Name must be at most 25 characters long");
 
 function validateAttributes(value: unknown, checkType: string): boolean {
   try {
@@ -28,6 +32,9 @@ function validateAttributes(value: unknown, checkType: string): boolean {
         break;
       case "passwordcheck":
         passwordSchema.parse(value);
+        break;
+      case "namecheck":
+        nameSchema.parse(value);
         break;
       default:
         throw new Error("Invalid check type");

@@ -6,20 +6,26 @@ import Auth from "../models/auth";
 import asyncHandeler from "../utils/asyncHandeler";
 import { createCustomError } from "../utils/customError";
 import { createSuccessResponse } from "../utils/createSuccessResponse";
-import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../utils/jwt";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyRefreshToken,
+} from "../utils/jwt";
 import { ApiResponse } from "../utils/ApiResponse";
 import { ApiError } from "../utils/ApiError";
 import { checkUser } from "../helper/checkUserExist";
 import logger from "../utils/logger";
-
+import User from "../models/user";
 
 const options = {
   httpOnly: true,
-  secure: true
-}
+  secure: true,
+};
 
-
-const generateAccessAndRefereshTokens = async (username: string, unique_id_key: number) => {
+const generateAccessAndRefereshTokens = async (
+  username: string,
+  unique_id_key: number
+) => {
   try {
     const accessToken = await generateAccessToken({ username });
     const refreshToken = await generateRefreshToken({ username });
@@ -27,81 +33,104 @@ const generateAccessAndRefereshTokens = async (username: string, unique_id_key: 
       { refreshToken: refreshToken },
       { where: { unique_id_key: unique_id_key } }
     );
-    return { accessToken, refreshToken }
-
+    return { accessToken, refreshToken };
   } catch (error) {
-    logger.error(error)
-    throw createCustomError("Something went wrong while generating referesh and access token", 500);
+    logger.error(error);
+    throw createCustomError(
+      "Something went wrong while generating referesh and access token",
+      500
+    );
   }
-}
+};
 
-
-export const signUp = asyncHandeler(async (req: Request, res: Response) => {
-  const { username, password } = req.body;
-  const usernameCheck = validateAttributes(username, "emailcheck");
-  if (!usernameCheck) {
-    throw createCustomError("invalid emailId", 401);
-  }
-  const passwordCheck = validateAttributes(password, "passwordcheck");
-  if (!passwordCheck) {
-    throw createCustomError("invalid password", 401);
-  }
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const uniqueIdKey = uuidv4();
-  const user = await Auth.create({
-    username: username,
-    password: hashedPassword,
-    unique_id_key: uniqueIdKey,
-  });
-  const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(username, user?.dataValues.unique_id_key)
-
-  return res
-    .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
-    .json(
-      new ApiResponse(
-        200,
-        "Sign-up Successfully",
-        { accessToken, refreshToken: refreshToken }
-
-      )
-    )
-});
-
-export const signIn = asyncHandeler(async (req: Request, res: Response) => {
-  const { username, password } = req.body;
-  const user = await Auth.findOne({ where: { username } });
-  if (!user || !(await bcrypt.compare(password, user?.dataValues.password))) {
-    throw createCustomError("Invalid username or password", 401);
-  }
-
-  const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(username, user?.dataValues.unique_id_key)
-
-  return res
-    .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
-    .json(
-      new ApiResponse(
-        200,
-        "Sign in Successfully",
-        { accessToken, refreshToken: refreshToken }
-
-      )
-    )
-});
-
-export const forgotPassword = asyncHandeler(
+export const updateUserDetails = asyncHandeler(
   async (req: Request, res: Response) => {
-    const { username } = req.body;
-    const user = await Auth.findOne({ where: { username } });
+    const { username, image, email } = req.body;
+    const unique_id_key = req.params.id;
+
+    if (!unique_id_key) {
+      throw createCustomError("unique_id_key is required", 400);
+    }
+
+    const emailCheck = validateAttributes(email, "emailcheck");
+    if (!emailCheck) {
+      throw createCustomError("invalid emailId", 401);
+    }
+
+    const userNameCheck = validateAttributes(username, "namecheck");
+    if (!userNameCheck) {
+      throw createCustomError("invalid username", 401);
+    }
+    const [user] = await User.update(
+      {
+        username: username,
+        email: email,
+        image: image,
+      },
+      {
+        where: { id: unique_id_key },
+      }
+    );
+
     if (!user) {
-      throw createCustomError("Invalid username", 401);
+      throw createCustomError("Invalid uuid", 401);
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "User update successfully"));
+  }
+);
+
+export const deleteUserDetails = asyncHandeler(
+  async (req: Request, res: Response) => {
+    const uniqueIdKey = req.params.id;
+    if (!uniqueIdKey) {
+      throw createCustomError("unique_id_key is required", 400);
+    }
+
+    const user = await User.destroy({ where: { id: uniqueIdKey } });
+    if (!user) {
+      throw createCustomError("Invalid unique_id_key", 401);
+    }
+
+    const auths = await Auth.destroy({ where: { unique_id_key: uniqueIdKey } });
+    if (!auths) {
+      throw createCustomError("Invalid unique_id_key", 401);
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "User deleted successfully"));
+  }
+);
+
+export const profileDetails = asyncHandeler(
+  async (req: Request, res: Response) => {
+    const users = await User.findAll();
+    if (Array.isArray(users) && !users.length) {
+      throw createCustomError("No user found", 404);
     }
     return res.status(200).json(
-      new ApiResponse(200, "https://localhost:3000/reset/?uuid=${user.dataValues.unique_id_key}")
-    )
+      new ApiResponse(200, "Users found", {
+        users: users,
+      })
+    );
+  }
+);
+
+export const profileDetailsByUserId = asyncHandeler(
+  async (req: Request, res: Response) => {
+    const uniqueIdKey = req.params.id;
+    const user = await User.findOne({ where: { id: uniqueIdKey } });
+    if (!user) {
+      throw createCustomError("No user found", 404);
+    }
+    return res.status(200).json(
+      new ApiResponse(200, "User found", {
+        user: user,
+      })
+    );
   }
 );
 
@@ -123,27 +152,25 @@ export const resetPassword = asyncHandeler(
       throw createCustomError("Invalid uuid", 401);
     }
 
-    return res.status(200).json(
-      new ApiResponse(200, "Reset Data Successfully", user)
-    )
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "Reset Data Successfully", user));
   }
 );
 
-export const getAllUserData = asyncHandeler(async (req: Request, res: Response) => {
-  const users = await Auth.findAll();
-  return res.status(200).json(
-    new ApiResponse(200, "User data retrieved Successfully", users)
-  )
-
-});
+export const getAllUserData = asyncHandeler(
+  async (req: Request, res: Response) => {
+    const users = await Auth.findAll();
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "User data retrieved Successfully", users));
+  }
+);
 
 export const signout = asyncHandeler(async (req: Request, res: Response) => {
-  res.clearCookie('token', { httpOnly: true, secure: true });
-  return res.status(200).json(
-    new ApiResponse(200, 'Logged out successfully')
-  )
+  res.clearCookie("token", { httpOnly: true, secure: true });
+  return res.status(200).json(new ApiResponse(200, "Logged out successfully"));
 });
-
 
 declare global {
   namespace Express {
@@ -153,23 +180,23 @@ declare global {
   }
 }
 
-export const refreshAccessToken = asyncHandeler(async (req: Request, res: Response) => {
-  const user =req.checkResult
-  const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user.username, user.unique_id_key)
+export const refreshAccessToken = asyncHandeler(
+  async (req: Request, res: Response) => {
+    const user = req.checkResult;
+    const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(
+      user.username,
+      user.unique_id_key
+    );
 
-  return res
-    .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
-    .json(
-      new ApiResponse(
-        200,
-        "Access token refreshed",
-        { accessToken, refreshToken: refreshToken }
-
-      )
-    )
-}
-)
-
-
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", refreshToken, options)
+      .json(
+        new ApiResponse(200, "Access token refreshed", {
+          accessToken,
+          refreshToken: refreshToken,
+        })
+      );
+  }
+);

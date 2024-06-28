@@ -1,6 +1,6 @@
 import { gql } from "apollo-server-express";
 
-const typeDefs = gql`
+const authSchema = gql`
   scalar Upload
 
   type UploadFile {
@@ -23,6 +23,7 @@ const typeDefs = gql`
   type Query {
     users: [User]
     user(id: ID!): User
+    forgotPassword(username: String!): User
   }
   type Mutation {
     signUp(username: String!, password: String!): AuthenticationData
@@ -31,6 +32,7 @@ const typeDefs = gql`
     signIn(username: String!, password: String!): AuthenticationData
     uploadFile(file: Upload!): UploadFile
     refreshAccessTokenChanger: AuthenticationData
+    resetPassword(unique_id_key: String!, password: String!): User
   }
 `;
-export default typeDefs;
+export default authSchema;

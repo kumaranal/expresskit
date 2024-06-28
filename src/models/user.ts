@@ -2,7 +2,7 @@ import { DataTypes, Model, Sequelize } from "sequelize";
 import sequelizeInstance from "./index";
 
 class User extends Model {
-  public id!: number;
+  public id!: string;
   public username!: string;
   public image!: string;
   public email!: string;
@@ -10,6 +10,11 @@ class User extends Model {
 
 User.init(
   {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
     username: DataTypes.STRING,
     image: DataTypes.STRING,
     email: DataTypes.STRING,
@@ -17,6 +22,7 @@ User.init(
   {
     sequelize: sequelizeInstance,
     modelName: "user",
+    tableName: "user",
   }
 );
 

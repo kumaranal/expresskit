@@ -4,7 +4,7 @@ import sequelize from "./models/index";
 import paymentRoutes from "./routes/payment.route";
 import logger from "./utils/logger";
 import demoRoutes from "./routes/demo.route";
-import typeDefs from "./graphql/schema";
+import schema from "./graphql/schema";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 dotenv.config();
@@ -15,25 +15,26 @@ import { getUserFromToken } from "./middleware/jwtCheck";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { createCustomError } from "./utils/customError";
+import userRoutes from "./routes/user.route";
 // import graphqlUploadExpress from 'graphql-upload/GraphQLUpload.mjs';
 // import { AppoloServerPluginDrainHttpServer} from 'apollo-server-core';
 
 // Create an instance of ApolloServer
 const server = new ApolloServer({
-  typeDefs,
+  typeDefs: schema,
   resolvers,
   context: ({ req, res }) => {
     const token = req.cookies.accessToken;
     let user = null;
     try {
       if (!token) {
-        throw createCustomError("Invalid Token")
+        throw createCustomError("Invalid Token");
       }
       user = getUserFromToken(token);
     } catch (error) {
       logger.error("error occures", { error: error });
     }
-    return { user,req, res };
+    return { user, req, res };
   },
 });
 
@@ -48,7 +49,7 @@ app.use("/api", paymentRoutes);
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
-  message: 'Too many requests from this IP, please try again after 15 minutes',
+  message: "Too many requests from this IP, please try again after 15 minutes",
 });
 app.use(limiter);
 app.use(helmet());
@@ -62,12 +63,9 @@ app.get("/", (req, res) => {
 
 app.use("/api", demoRoutes);
 app.use("/api", authRoutes);
-
-
-
+app.use("/api", userRoutes);
 
 async function startServer() {
-
   //error handling
   app.use(errorHandlerfn);
 
@@ -83,7 +81,9 @@ async function startServer() {
     .sync()
     .then(() => {
       app.listen(port, () => {
-        logger.info(`Server is running on http://localhost:${port} & for graphql use http://localhost:${port}/graphql`);
+        logger.info(
+          `Server is running on http://localhost:${port} & for graphql use http://localhost:${port}/graphql`
+        );
       });
     })
     .catch((err: Error) => {
