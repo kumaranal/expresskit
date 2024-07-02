@@ -1,7 +1,7 @@
 import logger from "../utils/logger";
 import staticConfig from "./staticConfig";
 
-const nodemailer = require("nodemailer");
+import nodemailer from "nodemailer";
 async function getSMTPTransporter() {
   let transporter = nodemailer.createTransport({
     service: staticConfig.smtpTransporter.service,
