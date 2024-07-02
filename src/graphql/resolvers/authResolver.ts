@@ -13,10 +13,30 @@ import {
 import { checkUserData } from "../../helper/checkUserExist";
 import { UUID } from "crypto";
 import logger from "../../utils/logger";
+import User from "../../models/user";
+import { EventEmitter } from "events";
+import sendingMail from "../../helper/transport";
+import staticConfig from "../../helper/staticConfig";
+
 const options = {
   httpOnly: true,
   secure: true,
 };
+
+interface AuthInterface {
+  id: number;
+  username: string;
+  password: string;
+  unique_id_key: string;
+  user: Users; // Assuming 'user' association exists on Auth model
+}
+
+interface Users {
+  id: string;
+  username: string;
+  image: string | null;
+  email: string | null;
+}
 
 export const generateAccessAndRefereshTokens = async (
   username: string,
@@ -45,8 +65,26 @@ const authResolver = {
       if (!context.user) {
         throw createCustomError("Unauthorized");
       }
-      const users = await Auth.findAll();
-      return users;
+      const users = await Auth.findAll({
+        include: {
+          model: User,
+          as: "user",
+        },
+        raw: true,
+      });
+      const result: AuthInterface[] = users.map((auth) => ({
+        id: auth.id,
+        username: auth.username,
+        password: auth.password,
+        unique_id_key: auth.unique_id_key,
+        user: {
+          id: auth["user.id"],
+          username: auth["user.username"],
+          image: auth["user.image"],
+          email: auth["user.email"],
+        },
+      }));
+      return result;
     }),
     user: asyncHandler(async (_, { id }, context) => {
       if (!context.user) {
@@ -54,18 +92,6 @@ const authResolver = {
       }
       const users = await Auth.findByPk(id);
       return users;
-    }),
-    forgotPassword: asyncHandler(async (_, { email }, context) => {
-      if (!context.user) {
-        throw createCustomError("Unauthorized");
-      }
-      const user = await Auth.findOne({ where: { email } });
-
-      if (!user) {
-        throw createCustomError("User not found");
-      }
-
-      return `https://localhost:3000/reset/?uuid=${user.dataValues.unique_id_key}`;
     }),
   },
   Mutation: {
@@ -88,6 +114,19 @@ const authResolver = {
       context.res
         .cookie("accessToken", accessToken, options)
         .cookie("refreshToken", refreshToken, options);
+
+      let eventEmitter = new EventEmitter();
+      eventEmitter.on("emailSent", (data) => {
+        sendingMail(data);
+      });
+
+      // Emit the 'emailSent' event with the necessary data
+      eventEmitter.emit("emailSent", {
+        senderEmail: username,
+        subject: staticConfig.signUpEmail.subject,
+        text: staticConfig.signUpEmail.text,
+      });
+
       return { message: "successfully signed up", token: accessToken };
     }),
     updateUser: asyncHandler(async (_, { id, username, password }, context) => {
@@ -173,7 +212,7 @@ const authResolver = {
       return { message: "Access token refreshed", token: accessToken };
     }),
     resetPassword: asyncHandler(
-      async (_, { uniqueKeyId, password }, context) => {
+      async (_, { unique_id_key, password }, context) => {
         if (context.user) {
           throw createCustomError("Unauthorized");
         }
@@ -184,15 +223,46 @@ const authResolver = {
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = await Auth.update(
           { password: hashedPassword },
-          { where: { unique_id_key: uniqueKeyId } }
+          { where: { unique_id_key: unique_id_key } }
         );
 
         if (!user) {
           throw createCustomError("Invalid uuid", 401);
         }
-        return { message: "Reset Data Successfully", user };
+        return { message: "Reset Data Successfully" };
       }
     ),
+    forgotPassword: asyncHandler(async (_, { username }, context) => {
+      if (!context.user) {
+        throw createCustomError("Unauthorized");
+      }
+
+      if (!validateAttributes(username, "emailcheck")) {
+        throw createCustomError("Invalid username");
+      }
+
+      const user = await Auth.findOne({ where: { username: username } });
+
+      if (!user) {
+        throw createCustomError("User not found");
+      }
+
+      let eventEmitter = new EventEmitter();
+      eventEmitter.on("emailSent", (data) => {
+        sendingMail(data);
+      });
+
+      // Emit the 'emailSent' event with the necessary data
+      eventEmitter.emit("emailSent", {
+        senderEmail: username,
+        subject: staticConfig.forgotPasswordEmail.subject,
+        text: `${staticConfig.forgotPasswordEmail.text} https://localhost:3000/reset/?uuid=${user.dataValues.unique_id_key}`,
+      });
+
+      return {
+        url: `https://localhost:3000/reset/?uuid=${user.dataValues.unique_id_key}`,
+      };
+    }),
   },
 };
 export default authResolver;

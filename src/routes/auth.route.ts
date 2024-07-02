@@ -15,10 +15,10 @@ const router = Router();
 
 router.post("/signup", signUp);
 router.post("/signin", signIn);
-router.post("/forgot-password", authenticateToken, forgotPassword);
+router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", authenticateToken, resetPassword);
-router.get("/allUser",authenticateToken, getAllUserData)
+router.get("/allUser", authenticateToken, getAllUserData);
 router.get("/signout", authenticateToken, signout);
-router.get("/refreshAccessToken",authenticateRefreshToken ,refreshAccessToken);
+router.get("/refreshAccessToken", authenticateRefreshToken, refreshAccessToken);
 
 export default router;

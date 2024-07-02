@@ -10,6 +10,9 @@ import { ApiResponse } from "../utils/ApiResponse";
 import logger from "../utils/logger";
 import { UUID } from "crypto";
 import User from "../models/user";
+import { EventEmitter } from "events";
+import sendingMail from "../helper/transport";
+import staticConfig from "../helper/staticConfig";
 
 const options = {
   httpOnly: true,
@@ -59,6 +62,18 @@ export const signUp = asyncHandeler(async (req: Request, res: Response) => {
     user?.dataValues.unique_id_key
   );
 
+  let eventEmitter = new EventEmitter();
+  eventEmitter.on("emailSent", (data) => {
+    sendingMail(data);
+  });
+
+  // Emit the 'emailSent' event with the necessary data
+  eventEmitter.emit("emailSent", {
+    senderEmail: username,
+    subject: staticConfig.signUpEmail.subject,
+    text: staticConfig.signUpEmail.text,
+  });
+
   return res
     .status(200)
     .cookie("accessToken", accessToken, options)
@@ -102,12 +117,25 @@ export const forgotPassword = asyncHandeler(
     if (!user) {
       throw createCustomError("Invalid username", 401);
     }
+
+    let eventEmitter = new EventEmitter();
+    eventEmitter.on("emailSent", (data) => {
+      sendingMail(data);
+    });
+
+    // Emit the 'emailSent' event with the necessary data
+    eventEmitter.emit("emailSent", {
+      senderEmail: username,
+      subject: staticConfig.forgotPasswordEmail.subject,
+      text: `${staticConfig.forgotPasswordEmail.text} https://localhost:3000/reset/?uuid=${user.dataValues.unique_id_key}`,
+    });
+
     return res
       .status(200)
       .json(
         new ApiResponse(
           200,
-          "https://localhost:3000/reset/?uuid=${user.dataValues.unique_id_key}"
+          `https://localhost:3000/reset/?uuid=${user.dataValues.unique_id_key}`
         )
       );
   }

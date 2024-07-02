@@ -71,7 +71,7 @@ async function startServer() {
 
   // GraphQL endpoint
   await server.start();
-  server.applyMiddleware({ app });
+  server.applyMiddleware({ app, path: "/graphql" });
   // Catch 404 and forward to error handler
   app.use((req, res, next) => {
     const error = new Error("API not found");

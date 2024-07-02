@@ -16,11 +16,16 @@ import { ApiError } from "../utils/ApiError";
 import { checkUser } from "../helper/checkUserExist";
 import logger from "../utils/logger";
 import User from "../models/user";
+import multer from "multer";
+import uploadFileToSupabase from "../helper/fileUpload";
 
 const options = {
   httpOnly: true,
   secure: true,
 };
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 const generateAccessAndRefereshTokens = async (
   username: string,
@@ -200,3 +205,42 @@ export const refreshAccessToken = asyncHandeler(
       );
   }
 );
+
+export const uploadFile = asyncHandeler(async (req: Request, res: Response) => {
+  const RETRY_LIMIT = 3;
+  for (let attempt = 1; attempt <= RETRY_LIMIT; attempt++) {
+    try {
+      const file = req.file;
+      if (!file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const publicUrl = await uploadFileToSupabase(
+        file.path,
+        file.originalname
+      );
+      const [updated] = await User.update(
+        {
+          image: publicUrl,
+        },
+        {
+          where: {
+            username: req["user"].username,
+          },
+        }
+      );
+      if (updated) {
+        return res
+          .status(200)
+          .json(new ApiResponse(200, "File uploaded successfully"));
+      } else {
+        return res.status(404).json({ message: "User not found" });
+      }
+    } catch (error) {
+      logger.error(`Attempt ${attempt} failed:`, error);
+      if (attempt === RETRY_LIMIT) {
+        throw new Error("All attempts to upload the file failed");
+      }
+    }
+  }
+});

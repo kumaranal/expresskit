@@ -6,8 +6,8 @@ const userSchema = gql`
   type User {
     id: ID!
     username: String!
-    email: String!
-    image: String!
+    email: String
+    image: String
   }
 
   type AuthenticationData {
@@ -16,7 +16,7 @@ const userSchema = gql`
   }
 
   extend type Query {
-    getUser(id: ID!): User
+    getUsers: [User]
     getUser(id: ID!): User
   }
 

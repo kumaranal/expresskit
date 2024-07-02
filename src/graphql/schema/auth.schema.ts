@@ -20,10 +20,27 @@ const authSchema = gql`
     message: String!
     token: String!
   }
+
+  type ResponseMessage {
+    message: String!
+  }
+
+  type MyUser {
+    id: ID!
+    username: String!
+    email: String
+    image: String
+  }
+
+  type Auth {
+    id: ID!
+    username: String!
+    user: MyUser
+  }
+
   type Query {
-    users: [User]
+    users: [Auth]
     user(id: ID!): User
-    forgotPassword(username: String!): User
   }
   type Mutation {
     signUp(username: String!, password: String!): AuthenticationData
@@ -32,7 +49,8 @@ const authSchema = gql`
     signIn(username: String!, password: String!): AuthenticationData
     uploadFile(file: Upload!): UploadFile
     refreshAccessTokenChanger: AuthenticationData
-    resetPassword(unique_id_key: String!, password: String!): User
+    resetPassword(unique_id_key: String!, password: String!): ResponseMessage
+    forgotPassword(username: String!): UploadFile
   }
 `;
 export default authSchema;

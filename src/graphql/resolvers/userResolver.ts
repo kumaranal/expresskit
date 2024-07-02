@@ -14,18 +14,18 @@ const options = {
 
 const userResolver = {
   Query: {
-    users: asyncHandler(async (parent, args, context) => {
+    getUsers: asyncHandler(async (parent, args, context) => {
       if (!context.user) {
         throw createCustomError("Unauthorized");
       }
-      const users = await Auth.findAll();
+      const users = await User.findAll();
       return users;
     }),
-    user: asyncHandler(async (_, { id }, context) => {
+    getUser: asyncHandler(async (_, { id }, context) => {
       if (!context.user) {
         throw createCustomError("Unauthorized");
       }
-      const users = await Auth.findByPk(id);
+      const users = await User.findByPk(id);
       return users;
     }),
   },

@@ -20,6 +20,7 @@ Auth.init(
   {
     sequelize: sequelizeInstance,
     modelName: "auth",
+    tableName: "auths",
   }
 );
 
