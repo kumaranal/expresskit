@@ -18,7 +18,7 @@ import logger from "../utils/logger";
 import User from "../models/user";
 import multer from "multer";
 import uploadFileToSupabase from "../helper/fileUpload";
-
+import fs from "fs";
 const options = {
   httpOnly: true,
   secure: true,
@@ -230,9 +230,15 @@ export const uploadFile = asyncHandeler(async (req: Request, res: Response) => {
         }
       );
       if (updated) {
-        return res
-          .status(200)
-          .json(new ApiResponse(200, "File uploaded successfully"));
+        fs.unlink(file.path, (err) => {
+          if (err) {
+            throw createCustomError("Failed to delete temporary file:", 400);
+          } else {
+            return res
+              .status(200)
+              .json(new ApiResponse(200, "File uploaded successfully"));
+          }
+        });
       } else {
         return res.status(404).json({ message: "User not found" });
       }
