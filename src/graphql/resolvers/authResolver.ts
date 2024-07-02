@@ -213,10 +213,6 @@ const authResolver = {
     }),
     resetPassword: asyncHandler(
       async (_, { unique_id_key, password }, context) => {
-        if (context.user) {
-          throw createCustomError("Unauthorized");
-        }
-
         if (!validateAttributes(password, "passwordcheck")) {
           throw createCustomError("Invalid password");
         }
@@ -233,10 +229,6 @@ const authResolver = {
       }
     ),
     forgotPassword: asyncHandler(async (_, { username }, context) => {
-      if (!context.user) {
-        throw createCustomError("Unauthorized");
-      }
-
       if (!validateAttributes(username, "emailcheck")) {
         throw createCustomError("Invalid username");
       }

@@ -7,6 +7,7 @@ import asyncHandler from "../../utils/asyncHandelerForGraphql";
 import { createCustomError } from "../../utils/customError";
 import { generateAccessAndRefereshTokens } from "../../controllers/auth.controller";
 import User from "../../models/user";
+import uploadFileToSupabase from "../../helper/fileUpload";
 const options = {
   httpOnly: true,
   secure: true,
@@ -67,6 +68,50 @@ const userResolver = {
         return true;
       }
       return false;
+    }),
+    uploadFile: asyncHandler(async (_, { file }, context) => {
+      if (!context.user) {
+        throw createCustomError("Unauthorized");
+      }
+      const RETRY_LIMIT = 3;
+      const { createReadStream, filename, mimetype, encoding } = await file;
+      const stream = createReadStream();
+
+      let attempt = 1;
+      while (attempt <= RETRY_LIMIT) {
+        try {
+          const publicUrl = await uploadFileToSupabase(stream, filename);
+
+          const [updated] = await User.update(
+            {
+              image: publicUrl,
+            },
+            {
+              where: {
+                username: context.user.username,
+              },
+            }
+          );
+
+          if (updated) {
+            return {
+              status: 200,
+              message: "File uploaded successfully",
+            };
+          } else {
+            return {
+              status: 404,
+              message: "User not found",
+            };
+          }
+        } catch (error) {
+          console.error(`Attempt ${attempt} failed:`, error);
+          if (attempt === RETRY_LIMIT) {
+            throw new Error("All attempts to upload the file failed");
+          }
+        }
+        attempt += 1;
+      }
     }),
   },
 };

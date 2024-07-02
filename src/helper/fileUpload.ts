@@ -1,7 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
-import logger from "../utils/logger";
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_URL = process.env.NEW_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SECRETKEY;
 const BUCKET_NAME = process.env.SUPABASE_BUCKET;
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);

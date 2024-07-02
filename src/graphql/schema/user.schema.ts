@@ -15,6 +15,11 @@ const userSchema = gql`
     token: String!
   }
 
+  type ApiResponse {
+    status: Int!
+    message: String!
+  }
+
   extend type Query {
     getUsers: [User]
     getUser(id: ID!): User
@@ -24,6 +29,7 @@ const userSchema = gql`
     createUser(username: String!, password: String!): AuthenticationData
     updateUser(id: ID!, username: String, password: String): User
     deleteUser(id: ID!): Boolean
+    uploadFile(file: Upload!): ApiResponse!
   }
 `;
 

@@ -5,6 +5,7 @@ import authSchema from "./auth.schema";
 import userSchema from "./user.schema";
 
 const rootSchema = gql`
+  scalar Upload
   type Query {
     _: Boolean
   }

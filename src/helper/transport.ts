@@ -1,4 +1,4 @@
-import { getLogger } from "nodemailer/lib/shared";
+import logger from "../utils/logger";
 import staticConfig from "./staticConfig";
 
 const nodemailer = require("nodemailer");
@@ -14,7 +14,6 @@ async function getSMTPTransporter() {
 }
 
 async function sendingMail(mailDetails: any) {
-  const logger = getLogger();
   let mailOptions = {
     from: staticConfig.smtpTransporter.email, // sender address
     to: mailDetails.senderEmail, // list of receivers
