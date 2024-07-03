@@ -18,6 +18,7 @@ import logger from "../utils/logger";
 import User from "../models/user";
 import multer from "multer";
 import uploadFileToSupabase from "../helper/fileUpload";
+import fileDownloadFromSupabase from "../helper/fileDownload";
 
 const options = {
   httpOnly: true,
@@ -211,14 +212,12 @@ export const uploadFile = asyncHandeler(async (req: Request, res: Response) => {
   for (let attempt = 1; attempt <= RETRY_LIMIT; attempt++) {
     try {
       const file = req.file;
+      const fileBuffer = req.file.buffer;
       if (!file) {
         return res.status(400).json({ error: "No file uploaded" });
       }
 
-      const publicUrl = await uploadFileToSupabase(
-        file.path,
-        file.originalname
-      );
+      const publicUrl = await uploadFileToSupabase(fileBuffer);
       const [updated] = await User.update(
         {
           image: publicUrl,
@@ -244,3 +243,32 @@ export const uploadFile = asyncHandeler(async (req: Request, res: Response) => {
     }
   }
 });
+
+export const downloadFile = asyncHandeler(
+  async (req: Request, res: Response) => {
+    const RETRY_LIMIT = 3;
+    for (let attempt = 1; attempt <= RETRY_LIMIT; attempt++) {
+      try {
+        const user = await User.findOne({
+          where: {
+            username: req["user"].username,
+          },
+        });
+        if (user) {
+          console.log(user.image);
+          const downloadFile = await fileDownloadFromSupabase(user.image);
+          return res
+            .status(200)
+            .json(new ApiResponse(200, "Download successfully"));
+        } else {
+          return res.status(404).json({ message: "User not found" });
+        }
+      } catch (error) {
+        logger.error(`Attempt ${attempt} failed:`, error);
+        if (attempt === RETRY_LIMIT) {
+          throw new Error("All attempts to upload the file failed");
+        }
+      }
+    }
+  }
+);

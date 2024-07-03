@@ -6,7 +6,7 @@ const staticConfig = {
   },
   forgotPasswordEmail: {
     subject: "Reset Password",
-    text: "Your reset password link is",
+    text: "Your reset password link ",
   },
   signUpEmail: {
     subject: "Welcome to our website",

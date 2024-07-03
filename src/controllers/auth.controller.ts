@@ -127,17 +127,15 @@ export const forgotPassword = asyncHandeler(
     eventEmitter.emit("emailSent", {
       senderEmail: username,
       subject: staticConfig.forgotPasswordEmail.subject,
-      text: `${staticConfig.forgotPasswordEmail.text} https://localhost:3000/reset/?uuid=${user.dataValues.unique_id_key}`,
+      text: `${staticConfig.forgotPasswordEmail.text} for app is myapp://app/auth/resetPassword/?uuid=${user.dataValues.unique_id_key} and web is http://localhost:3000/reset/?uuid=${user.dataValues.unique_id_key}`,
     });
 
-    return res
-      .status(200)
-      .json(
-        new ApiResponse(
-          200,
-          `https://localhost:3000/reset/?uuid=${user.dataValues.unique_id_key}`
-        )
-      );
+    return res.status(200).json(
+      new ApiResponse(200, "send successfully", {
+        appUrl: `myapp://app/auth/resetPassword/?uuid=${user.dataValues.unique_id_key}`,
+        webUrl: `http://localhost:3000/reset/?uuid=${user.dataValues.unique_id_key}`,
+      })
+    );
   }
 );
 

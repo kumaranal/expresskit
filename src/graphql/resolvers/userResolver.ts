@@ -80,7 +80,7 @@ const userResolver = {
       let attempt = 1;
       while (attempt <= RETRY_LIMIT) {
         try {
-          const publicUrl = await uploadFileToSupabase(stream, filename);
+          const publicUrl = await uploadFileToSupabase(stream);
 
           const [updated] = await User.update(
             {
