@@ -1,3 +1,4 @@
+import { sendNotification } from "../helper/sendNotification";
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
@@ -12,8 +13,6 @@ import {
   verifyRefreshToken,
 } from "../utils/jwt";
 import { ApiResponse } from "../utils/ApiResponse";
-import { ApiError } from "../utils/ApiError";
-import { checkUser } from "../helper/checkUserExist";
 import logger from "../utils/logger";
 import User from "../models/user";
 import multer from "multer";
@@ -270,5 +269,23 @@ export const downloadFile = asyncHandeler(
         }
       }
     }
+  }
+);
+
+export const userNotification = asyncHandeler(
+  async (req: Request, res: Response) => {
+    try {
+      const { token, title, body } = req.body;
+      const notification = await sendNotification(token, title, body);
+      if (notification) {
+        return res
+          .status(200)
+          .json(new ApiResponse(200, "Send notification successfully"));
+      } else {
+        return res
+          .status(401)
+          .json(new ApiResponse(401, "Send notification unsuccessfully"));
+      }
+    } catch (error) {}
   }
 );
