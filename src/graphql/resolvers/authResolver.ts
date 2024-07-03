@@ -17,6 +17,7 @@ import User from "../../models/user";
 import { EventEmitter } from "events";
 import sendingMail from "../../helper/transport";
 import staticConfig from "../../helper/staticConfig";
+import { JwtPayload } from "jsonwebtoken";
 
 const options = {
   httpOnly: true,
@@ -194,7 +195,7 @@ const authResolver = {
         throw createCustomError("Unauthorized: No token provided");
       }
       const user = verifyRefreshToken(incomingRefreshToken);
-      if (!user || !user.username) {
+      if (!user || !isMyJwtPayload(user)) {
         throw createCustomError("Unauthorized: Invalid token");
       }
       const checkResult = await checkUserData(user.username);
@@ -257,4 +258,11 @@ const authResolver = {
     }),
   },
 };
+
+interface MyJwtPayload extends JwtPayload {
+  username: string;
+}
+function isMyJwtPayload(payload: string | JwtPayload): payload is MyJwtPayload {
+  return (payload as MyJwtPayload).username !== undefined;
+}
 export default authResolver;

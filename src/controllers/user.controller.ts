@@ -19,8 +19,6 @@ import User from "../models/user";
 import multer from "multer";
 import uploadFileToSupabase from "../helper/fileUpload";
 import fileDownloadFromSupabase from "../helper/fileDownload";
-import { sendNotification } from "../helper/sendNotification";
-import staticConfig from "../helper/staticConfig";
 
 const options = {
   httpOnly: true,
@@ -272,23 +270,5 @@ export const downloadFile = asyncHandeler(
         }
       }
     }
-  }
-);
-
-export const userNotification = asyncHandeler(
-  async (req: Request, res: Response) => {
-    try {
-      const { token, title, body } = req.body;
-      const notification = await sendNotification(token, title, body);
-      if (notification) {
-        return res
-          .status(200)
-          .json(new ApiResponse(200, "Send notification successfully"));
-      } else {
-        return res
-          .status(401)
-          .json(new ApiResponse(401, "Send notification unsuccessfully"));
-      }
-    } catch (error) {}
   }
 );
