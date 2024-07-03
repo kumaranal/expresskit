@@ -12,6 +12,10 @@ const staticConfig = {
     subject: "Welcome to our website",
     text: "Your account has been created",
   },
+  notifications: {
+    title: "Welcome to our Expresskit",
+    body: "Your most welcome to our Expresskit",
+  },
 };
 
 export default staticConfig;

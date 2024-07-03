@@ -19,6 +19,8 @@ import User from "../models/user";
 import multer from "multer";
 import uploadFileToSupabase from "../helper/fileUpload";
 import fileDownloadFromSupabase from "../helper/fileDownload";
+import { sendNotification } from "../helper/sendNotification";
+import staticConfig from "../helper/staticConfig";
 
 const options = {
   httpOnly: true,
@@ -212,6 +214,7 @@ export const uploadFile = asyncHandeler(async (req: Request, res: Response) => {
   for (let attempt = 1; attempt <= RETRY_LIMIT; attempt++) {
     try {
       const file = req.file;
+      logger.info("file", file);
       const fileBuffer = req.file.buffer;
       if (!file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -233,7 +236,7 @@ export const uploadFile = asyncHandeler(async (req: Request, res: Response) => {
           .status(200)
           .json(new ApiResponse(200, "File uploaded successfully"));
       } else {
-        return res.status(404).json({ message: "User not found" });
+        return res.status(404).json(new ApiResponse(200, "User not found"));
       }
     } catch (error) {
       logger.error(`Attempt ${attempt} failed:`, error);
@@ -255,13 +258,12 @@ export const downloadFile = asyncHandeler(
           },
         });
         if (user) {
-          console.log(user.image);
-          const downloadFile = await fileDownloadFromSupabase(user.image);
+          await fileDownloadFromSupabase(user.image);
           return res
             .status(200)
             .json(new ApiResponse(200, "Download successfully"));
         } else {
-          return res.status(404).json({ message: "User not found" });
+          return res.status(404).json(new ApiResponse(404, "User not found"));
         }
       } catch (error) {
         logger.error(`Attempt ${attempt} failed:`, error);
@@ -270,5 +272,23 @@ export const downloadFile = asyncHandeler(
         }
       }
     }
+  }
+);
+
+export const userNotification = asyncHandeler(
+  async (req: Request, res: Response) => {
+    try {
+      const { token, title, body } = req.body;
+      const notification = await sendNotification(token, title, body);
+      if (notification) {
+        return res
+          .status(200)
+          .json(new ApiResponse(200, "Send notification successfully"));
+      } else {
+        return res
+          .status(401)
+          .json(new ApiResponse(401, "Send notification unsuccessfully"));
+      }
+    } catch (error) {}
   }
 );
