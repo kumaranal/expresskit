@@ -2,6 +2,7 @@ import express from "express";
 import authRoutes from "./routes/auth.route";
 import sequelize from "./models/index";
 import paymentRoutes from "./routes/payment.route";
+import phonepayPaymentRoutes from "./routes/phonepayPayment.route";
 import logger from "./utils/logger";
 import demoRoutes from "./routes/demo.route";
 import schema from "./graphql/schema";
@@ -16,8 +17,8 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { createCustomError } from "./utils/customError";
 import userRoutes from "./routes/user.route";
-// import graphqlUploadExpress from 'graphql-upload/GraphQLUpload.mjs';
-// import { AppoloServerPluginDrainHttpServer} from 'apollo-server-core';
+// import graphqlUploadExpress from "graphql-upload/GraphQLUpload.mjs";
+// import { AppoloServerPluginDrainHttpServer } from "apollo-server-core";
 
 // Create an instance of ApolloServer
 const server = new ApolloServer({
@@ -43,8 +44,8 @@ const port = 3000;
 // app.use(graphqlUploadExpress({ maxFileSize: 10000000, maxFiles: 10 }));
 
 //payment webhook
-app.use("/api", paymentRoutes);
-
+// app.use("/api", paymentRoutes);
+app.use("/api", phonepayPaymentRoutes);
 //rate limiter
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes

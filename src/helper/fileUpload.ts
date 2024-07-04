@@ -1,31 +1,55 @@
 import { createClient } from "@supabase/supabase-js";
-import logger from "../utils/logger";
+import { createCustomError } from "../utils/customError";
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_URL = process.env.NEW_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SECRETKEY;
 const BUCKET_NAME = process.env.SUPABASE_BUCKET;
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const uploadFileToSupabase = async (filePath, fileName) => {
+export const uploadFileToSupabase = async (filePath, fileName) => {
   try {
-    const { data, error } = await supabase.storage
+    const date = new Date().toISOString();
+    const { data, error } = await supabaseClient.storage
       .from(BUCKET_NAME)
-      .upload(fileName, filePath, {
+      .upload(date, Buffer.from(filePath), {
+        upsert: true,
+        contentType: fileName,
+      });
+
+    if (error) {
+      throw createCustomError(error.message, 400);
+    }
+
+    const { data: publicURL } = supabaseClient.storage
+      .from(BUCKET_NAME)
+      .getPublicUrl(date);
+
+    return publicURL.publicUrl;
+  } catch (error) {
+    throw createCustomError(error.message, 400);
+  }
+};
+
+export const uploadFileToSupabaseBase64 = async (filePath, fileName) => {
+  try {
+    const date = new Date().toISOString();
+    const { data, error } = await supabaseClient.storage
+      .from(BUCKET_NAME)
+      .upload(date, filePath, {
+        contentType: fileName,
         upsert: true,
       });
 
     if (error) {
-      throw error;
+      throw createCustomError(error.message, 400);
     }
 
-    const { data: publicURL } = supabase.storage
+    const { data: publicURL } = supabaseClient.storage
       .from(BUCKET_NAME)
-      .getPublicUrl(fileName);
+      .getPublicUrl(date);
 
-    return publicURL;
+    return publicURL.publicUrl;
   } catch (error) {
-    throw error;
+    throw createCustomError(error.message, 400);
   }
 };
-
-export default uploadFileToSupabase;

@@ -1,9 +1,7 @@
 import { gql } from "apollo-server-express";
 
 const authSchema = gql`
-  scalar Upload
-
-  type UploadFile {
+  type UrlResponse {
     url: String!
   }
   type CheckResponse {
@@ -47,10 +45,9 @@ const authSchema = gql`
     updateUser(id: ID!, username: String, password: String): User
     deleteUser(id: ID!): Boolean
     signIn(username: String!, password: String!): AuthenticationData
-    uploadFile(file: Upload!): UploadFile
     refreshAccessTokenChanger: AuthenticationData
     resetPassword(unique_id_key: String!, password: String!): ResponseMessage
-    forgotPassword(username: String!): UploadFile
+    forgotPassword(username: String!): UrlResponse
   }
 `;
 export default authSchema;
