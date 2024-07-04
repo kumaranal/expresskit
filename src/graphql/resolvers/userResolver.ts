@@ -7,7 +7,7 @@ import asyncHandler from "../../utils/asyncHandelerForGraphql";
 import { createCustomError } from "../../utils/customError";
 import { generateAccessAndRefereshTokens } from "../../controllers/auth.controller";
 import User from "../../models/user";
-import uploadFileToSupabase from "../../helper/fileUpload";
+import { uploadFileToSupabase } from "../../helper/fileUpload";
 const options = {
   httpOnly: true,
   secure: true,
@@ -80,7 +80,7 @@ const userResolver = {
       let attempt = 1;
       while (attempt <= RETRY_LIMIT) {
         try {
-          const publicUrl = await uploadFileToSupabase(stream);
+          const publicUrl = await uploadFileToSupabase(stream, filename);
 
           const [updated] = await User.update(
             {

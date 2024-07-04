@@ -16,8 +16,13 @@ import { ApiResponse } from "../utils/ApiResponse";
 import logger from "../utils/logger";
 import User from "../models/user";
 import multer from "multer";
-import uploadFileToSupabase from "../helper/fileUpload";
+import {
+  uploadFileToSupabase,
+  uploadFileToSupabaseBase64,
+} from "../helper/fileUpload";
 import fileDownloadFromSupabase from "../helper/fileDownload";
+import fs from "fs";
+import util from "util";
 
 const options = {
   httpOnly: true,
@@ -217,7 +222,7 @@ export const uploadFile = asyncHandeler(async (req: Request, res: Response) => {
         return res.status(400).json({ error: "No file uploaded" });
       }
 
-      const publicUrl = await uploadFileToSupabase(fileBuffer);
+      const publicUrl = await uploadFileToSupabase(fileBuffer, file.filename);
       const [updated] = await User.update(
         {
           image: publicUrl,
@@ -287,5 +292,52 @@ export const userNotification = asyncHandeler(
           .json(new ApiResponse(401, "Send notification unsuccessfully"));
       }
     } catch (error) {}
+  }
+);
+
+export const uploadImageBase64 = asyncHandeler(
+  async (req: Request, res: Response) => {
+    const writeFileAsync = util.promisify(fs.writeFile);
+    const readFileAsync = util.promisify(fs.readFile);
+    const unlinkAsync = util.promisify(fs.unlink);
+    const RETRY_LIMIT = 3;
+    for (let attempt = 1; attempt <= RETRY_LIMIT; attempt++) {
+      try {
+        const { image, base64 } = req.body;
+        if (!image) {
+          return res.status(400).json({ error: "No file uploaded" });
+        }
+
+        await writeFileAsync("image.png", base64, { encoding: "base64" });
+        const buffer = await readFileAsync("image.png");
+
+        const publicUrl = await uploadFileToSupabaseBase64(buffer, image);
+
+        const [updated] = await User.update(
+          {
+            image: publicUrl,
+          },
+          {
+            where: {
+              username: req["user"].username,
+            },
+          }
+        );
+        await unlinkAsync("image.png");
+        console.log("Deleted image file");
+        if (updated) {
+          return res
+            .status(200)
+            .json(new ApiResponse(200, "File uploaded successfully"));
+        } else {
+          return res.status(404).json(new ApiResponse(200, "User not found"));
+        }
+      } catch (error) {
+        logger.error(`Attempt ${attempt} failed:`, error);
+        if (attempt === RETRY_LIMIT) {
+          throw new Error("All attempts to upload the file failed");
+        }
+      }
+    }
   }
 );

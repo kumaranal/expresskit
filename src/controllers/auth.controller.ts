@@ -13,6 +13,7 @@ import User from "../models/user";
 import { EventEmitter } from "events";
 import sendingMail from "../helper/transport";
 import staticConfig from "../helper/staticConfig";
+import { resetPasswordTemplate } from "../helper/sendMail";
 
 const options = {
   httpOnly: true,
@@ -24,8 +25,11 @@ export const generateAccessAndRefereshTokens = async (
   unique_id_key: UUID | string
 ) => {
   try {
-    const accessToken = await generateAccessToken({ username });
-    const refreshToken = await generateRefreshToken({ username });
+    const accessToken = await generateAccessToken({ username, unique_id_key });
+    const refreshToken = await generateRefreshToken({
+      username,
+      unique_id_key,
+    });
     await Auth.update(
       { refreshToken: refreshToken },
       { where: { unique_id_key: unique_id_key } }
@@ -112,7 +116,7 @@ export const signIn = asyncHandeler(async (req: Request, res: Response) => {
 
 export const forgotPassword = asyncHandeler(
   async (req: Request, res: Response) => {
-    const { username } = req.body;
+    const { username, baseUrl } = req.body;
     const user = await Auth.findOne({ where: { username } });
     if (!user) {
       throw createCustomError("Invalid username", 401);
@@ -127,15 +131,20 @@ export const forgotPassword = asyncHandeler(
     eventEmitter.emit("emailSent", {
       senderEmail: username,
       subject: staticConfig.forgotPasswordEmail.subject,
-      text: `${staticConfig.forgotPasswordEmail.text} for app is myapp://app/auth/resetPassword/?uuid=${user.dataValues.unique_id_key} and web is http://localhost:3000/reset/?uuid=${user.dataValues.unique_id_key}`,
+      text: ``,
+      htmlTemplate: resetPasswordTemplate(
+        baseUrl,
+        user.dataValues.unique_id_key
+      ),
     });
-
-    return res.status(200).json(
-      new ApiResponse(200, "send successfully", {
-        appUrl: `myapp://app/auth/resetPassword/?uuid=${user.dataValues.unique_id_key}`,
-        webUrl: `http://localhost:3000/reset/?uuid=${user.dataValues.unique_id_key}`,
-      })
-    );
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          `${baseUrl}/?uuid=${user.dataValues.unique_id_key}`
+        )
+      );
   }
 );
 

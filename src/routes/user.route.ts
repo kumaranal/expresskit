@@ -7,6 +7,7 @@ import {
   profileDetailsByUserId,
   updateUserDetails,
   uploadFile,
+  uploadImageBase64,
   userNotification,
 } from "../controllers/user.controller";
 import multer from "multer";
@@ -22,5 +23,6 @@ router.get("/profile-detail/:id", authenticateToken, profileDetailsByUserId);
 router.post("/uploadFile", authenticateToken, upload, uploadFile);
 router.get("/downloadFile", authenticateToken, downloadFile);
 router.post("/userNotification", authenticateToken, userNotification);
+router.post("/uploadFileBase64", authenticateToken, uploadImageBase64);
 
 export default router;
