@@ -256,14 +256,26 @@ export const downloadFile = asyncHandeler(
       try {
         const user = await User.findOne({
           where: {
-            username: req["user"].username,
+            id: req["user"].unique_id_key,
           },
         });
         if (user) {
-          await fileDownloadFromSupabase(user.image);
-          return res
-            .status(200)
-            .json(new ApiResponse(200, "Download successfully"));
+          const { imageName, mimeType, data } = await fileDownloadFromSupabase(
+            user.image,
+            res
+          );
+          res.setHeader(
+            "Content-Disposition",
+            `attachment; filename="${imageName}"`
+          );
+          res.setHeader("Content-Type", mimeType);
+          res.setHeader("Content-Length", data.size);
+
+          // Send the data as a stream
+          data.arrayBuffer().then((buffer) => {
+            res.send(Buffer.from(buffer));
+          });
+          break;
         } else {
           return res.status(404).json(new ApiResponse(404, "User not found"));
         }
@@ -324,7 +336,7 @@ export const uploadImageBase64 = asyncHandeler(
           }
         );
         await unlinkAsync("image.png");
-        console.log("Deleted image file");
+        logger.info("Deleted image file");
         if (updated) {
           return res
             .status(200)

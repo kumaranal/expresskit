@@ -7,7 +7,7 @@ const SUPABASE_KEY = process.env.SUPABASE_SECRETKEY;
 const BUCKET_NAME = process.env.SUPABASE_BUCKET;
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const fileDownloadFromSupabase = async (filePath) => {
+const fileDownloadFromSupabase = async (filePath, res) => {
   try {
     const imageName = await getImageName(filePath);
     const { data, error } = await supabaseClient.storage
@@ -16,7 +16,10 @@ const fileDownloadFromSupabase = async (filePath) => {
     if (error) {
       throw createCustomError(error.message, 401);
     }
-    return true;
+
+    const mimeType = data.type || "application/octet-stream";
+
+    return { imageName, mimeType, data };
   } catch (error) {
     throw createCustomError(error.message, 500);
   }
