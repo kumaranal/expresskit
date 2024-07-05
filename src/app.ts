@@ -43,8 +43,10 @@ const app = express();
 const port = 3000;
 // app.use(graphqlUploadExpress({ maxFileSize: 10000000, maxFiles: 10 }));
 app.use(
+  "*",
   cors({
-    origin: "*",
+    origin: true,
+    credentials: true,
   })
 );
 //payment webhook
