@@ -234,9 +234,15 @@ export const uploadFile = asyncHandeler(async (req: Request, res: Response) => {
         }
       );
       if (updated) {
-        return res
-          .status(200)
-          .json(new ApiResponse(200, "File uploaded successfully"));
+        fs.unlink(file.path, (err) => {
+          if (err) {
+            throw createCustomError("Failed to delete temporary file:", 400);
+          } else {
+            return res
+              .status(200)
+              .json(new ApiResponse(200, "File uploaded successfully"));
+          }
+        });
       } else {
         return res.status(404).json(new ApiResponse(200, "User not found"));
       }
