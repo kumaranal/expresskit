@@ -2,7 +2,6 @@ import express from "express";
 import authRoutes from "./routes/auth.route";
 import sequelize from "./models/index";
 import paymentRoutes from "./routes/payment.route";
-import phonepayPaymentRoutes from "./routes/phonepayPayment.route";
 import logger from "./utils/logger";
 import demoRoutes from "./routes/demo.route";
 import schema from "./graphql/schema";
@@ -44,8 +43,7 @@ const port = 3000;
 // app.use(graphqlUploadExpress({ maxFileSize: 10000000, maxFiles: 10 }));
 
 //payment webhook
-// app.use("/api", paymentRoutes);
-app.use("/api", phonepayPaymentRoutes);
+app.use("/api", paymentRoutes);
 //rate limiter
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
