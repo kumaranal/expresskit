@@ -18,6 +18,7 @@ import { createCustomError } from "./utils/customError";
 import userRoutes from "./routes/user.route";
 // import graphqlUploadExpress from "graphql-upload/GraphQLUpload.mjs";
 // import { AppoloServerPluginDrainHttpServer } from "apollo-server-core";
+import cors from "cors";
 
 // Create an instance of ApolloServer
 const server = new ApolloServer({
@@ -41,7 +42,7 @@ const server = new ApolloServer({
 const app = express();
 const port = 3000;
 // app.use(graphqlUploadExpress({ maxFileSize: 10000000, maxFiles: 10 }));
-
+app.use(cors());
 //payment webhook
 app.use("/api", paymentRoutes);
 
