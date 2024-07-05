@@ -47,6 +47,7 @@ app.use(
   cors({
     origin: true,
     credentials: true,
+    methods: "GET,PUT,POST,DELETE",
   })
 );
 //payment webhook
