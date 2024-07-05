@@ -10,4 +10,6 @@ router.post(
   PaymentWebhook
 );
 
+router.post("/verification", express.raw({ type: "application/json" }));
+
 export default router;
