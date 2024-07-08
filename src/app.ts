@@ -43,13 +43,15 @@ const app = express();
 const port = 3000;
 // app.use(graphqlUploadExpress({ maxFileSize: 10000000, maxFiles: 10 }));
 app.use(
-  "*",
   cors({
-    origin: true,
+    origin: "*",
     credentials: true,
     methods: "GET,PUT,POST,DELETE",
   })
 );
+
+app.options("*", cors());
+
 //payment webhook
 app.use("/api", paymentRoutes);
 
@@ -79,7 +81,10 @@ async function startServer() {
 
   // GraphQL endpoint
   await server.start();
-  server.applyMiddleware({ app, path: "/graphql" });
+  server.applyMiddleware({
+    app,
+    path: "/graphql",
+  });
   // Catch 404 and forward to error handler
   app.use((req, res, next) => {
     const error = new Error("API not found");
