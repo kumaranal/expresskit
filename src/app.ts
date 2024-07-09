@@ -16,6 +16,7 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { createCustomError } from "./utils/customError";
 import userRoutes from "./routes/user.route";
+import aiTranslatorRoutes from "./routes/aiTranslator.route";
 // import graphqlUploadExpress from "graphql-upload/GraphQLUpload.mjs";
 // import { AppoloServerPluginDrainHttpServer } from "apollo-server-core";
 import cors from "cors";
@@ -74,6 +75,7 @@ app.get("/", (req, res) => {
 app.use("/api", demoRoutes);
 app.use("/api", authRoutes);
 app.use("/api", userRoutes);
+app.use("/api", aiTranslatorRoutes);
 
 async function startServer() {
   //error handling
