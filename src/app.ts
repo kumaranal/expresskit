@@ -45,16 +45,29 @@ const server = new ApolloServer({
 const app = express();
 const port = 3000;
 // app.use(graphqlUploadExpress({ maxFileSize: 10000000, maxFiles: 10 }));
+
+const allowedOrigins = [
+  "http://localhost:3002",
+  "http://localhost:3001",
+  "http://localhost:3000",
+
 app.use(
   cors({
-    origin: "*",
-    credentials: true,
-    methods: "GET,PUT,POST,DELETE",
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true, // Reflect the request's credentials as necessary
+    methods: ["GET", "PUT", "POST", "DELETE"],
   })
 );
-const wss = new WebSocket.Server({ port: 3001 });
 
 app.options("*", cors());
+
+const wss = new WebSocket.Server({ port: 3001 });
 
 //payment webhook
 app.use("/api", paymentRoutes);
