@@ -71,7 +71,7 @@ app.options("*", cors());
 // const wss = new WebSocket.Server({ port: port });
 
 //payment webhook
-app.use("/api", paymentRoutes);
+// app.use("/api", paymentRoutes);
 // app.use("/api", chatbotRoutes);
 
 // wss.on("connection", function connection(ws) {
