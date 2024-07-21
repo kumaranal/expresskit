@@ -43,7 +43,7 @@ const server = new ApolloServer({
 });
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = Number(process.env.PORT) || 3000;
 // app.use(graphqlUploadExpress({ maxFileSize: 10000000, maxFiles: 10 }));
 
 const allowedOrigins = [
@@ -68,23 +68,23 @@ app.use(
 
 app.options("*", cors());
 
-const wss = new WebSocket.Server({ port: 3001 });
+// const wss = new WebSocket.Server({ port: port });
 
 //payment webhook
 app.use("/api", paymentRoutes);
-app.use("/api", chatbotRoutes);
+// app.use("/api", chatbotRoutes);
 
-wss.on("connection", function connection(ws) {
-  ws.send("Welcome New Client!");
+// wss.on("connection", function connection(ws) {
+//   ws.send("Welcome New Client!");
 
-  ws.on("message", function incoming(message) {
-    wss.clients.forEach(function each(client) {
-      if (client !== ws && client.readyState === WebSocket.OPEN) {
-        client.send(message);
-      }
-    });
-  });
-});
+//   ws.on("message", function incoming(message) {
+//     wss.clients.forEach(function each(client) {
+//       if (client !== ws && client.readyState === WebSocket.OPEN) {
+//         client.send(message);
+//       }
+//     });
+//   });
+// });
 //rate limiter
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -104,7 +104,7 @@ app.get("/", (req, res) => {
 app.use("/api", demoRoutes);
 app.use("/api", authRoutes);
 app.use("/api", userRoutes);
-app.use("/api", aiTranslatorRoutes);
+// app.use("/api", aiTranslatorRoutes);
 
 async function startServer() {
   //error handling
